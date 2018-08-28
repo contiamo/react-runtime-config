@@ -1,12 +1,15 @@
 {
   "name": "react-runtime-config",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Provide a runtime configuration inside a react app",
   "repository": {
     "type": "git",
     "url": "git@github.com:contiamo/react-runtime-config.git"
   },
   "main": "./lib/index.js",
+  "files": [
+    "lib"
+  ],
   "scripts": {
     "test": "operational-scripts test",
     "build": "operational-scripts build",
