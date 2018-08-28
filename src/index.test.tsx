@@ -198,6 +198,27 @@ describe("react-runtime-config", () => {
     });
   });
 
+  describe("multiple values syntax", () => {
+    it("should return the default value", () => {
+      const { Config } = createConfig({ namespace: "test", storage });
+      const children = jest.fn(() => <div />);
+
+      render(<Config children={children} />);
+
+      expect(children.mock.calls[0][0]("plop", "plop-from-default")).toEqual("plop-from-default");
+    });
+
+    it("should return the value from the localstorage", () => {
+      const { Config } = createConfig({ namespace: "test", storage });
+      const children = jest.fn(() => <div />);
+
+      storage.setItem("test.plop", "plop-from-localstorage");
+      render(<Config children={children} />);
+
+      expect(children.mock.calls[0][0]("plop", "plop-from-default")).toEqual("plop-from-localstorage");
+    });
+  });
+
   describe("configList", () => {
     it("should return the entire list of paths", () => {
       const { Config, configList } = createConfig({ namespace: "test", storage });

@@ -6,6 +6,7 @@
 - [Why](#why)
 - [Getting started](#getting-started)
 - [Usage](#usage)
+- [Retrieve multiple values](#retrieve-multiple-values)
 - [Options](#options)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
@@ -71,6 +72,18 @@ The fallback order is the following:
 - `defaultValue` props (`red` in this example)
 
 The `configList` is a `Set<string>` of all config paths used in the application, very useful to create a config page to override locally any values :wink:
+
+## Retrieve multiple values
+
+```tsx
+// components/MyComponents.tsx
+import react from "React";
+import Config from "./Config";
+
+const MyComponent = () => (
+  <Config>{getConfig => <h1 style={{ color: getConfig("color", "red") }}>My title</h1>}</Config>
+);
+```
 
 ## Options
 
