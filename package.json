@@ -1,0 +1,35 @@
+{
+  "name": "react-runtime-config",
+  "version": "0.0.1",
+  "description": "Provide a runtime configuration inside a react app",
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:contiamo/react-runtime-config.git"
+  },
+  "main": "./lib/index.js",
+  "scripts": {
+    "test": "operational-scripts test",
+    "build": "operational-scripts build",
+    "prepublishOnly": "operational-scripts prepare"
+  },
+  "keywords": [
+    "react",
+    "config",
+    "configuration",
+    "runtime"
+  ],
+  "author": "Fabien Bernard <fabien@contiamo.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "@operational/scripts": "^1.1.0-4",
+    "@types/lodash": "^4.14.116",
+    "@types/react": "^16.4.12",
+    "react-dom": "^16.4.2",
+    "react-testing-library": "^5.0.0",
+    "ts-mockery": "^1.0.0"
+  },
+  "dependencies": {
+    "lodash": "^4.17.10",
+    "react": "^16.4.2"
+  }
+}
