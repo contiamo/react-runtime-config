@@ -1,15 +1,14 @@
+# React runtime config
+
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 
-- [React runtime config](#react-runtime-config)
-  - [Why](#why)
-  - [Getting started](#getting-started)
-  - [Usage](#usage)
-  - [Options](#options)
+- [Why](#why)
+- [Getting started](#getting-started)
+- [Usage](#usage)
+- [Options](#options)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
-
-# React runtime config
 
 ## Why
 
