@@ -15,6 +15,15 @@ const storage = Mock.of<Storage>({
   clear: () => (store = {}),
 });
 
+interface IConfig {
+  foo: string;
+  riri: string;
+  picsou: string;
+  loulou: string;
+  donald: string;
+  aBoolean: boolean;
+}
+
 describe("localStorage mock", () => {
   afterEach(() => {
     storage.clear();
@@ -38,210 +47,185 @@ describe("localStorage mock", () => {
 });
 
 describe("react-runtime-config", () => {
+  beforeEach(() => {
+    set(window, "test", { picsou: "a", donald: "b", riri: "c", loulou: "d", foo: "from-window", aBoolean: true });
+  });
   afterEach(() => {
     cleanup();
     storage.clear();
+    delete (window as any).test;
   });
 
   it("should get the localhost value", () => {
-    const { Config } = createConfig({ namespace: "test", storage });
+    const { Config } = createConfig<IConfig>({ namespace: "test", storage });
     const children = jest.fn(() => <div />);
 
     storage.setItem("test.foo", "from-localstorage");
 
-    render(<Config path="foo" defaultValue="from-default" children={children} />);
+    render(<Config children={children} />);
 
-    expect(children).toBeCalledWith("from-localstorage");
+    expect(children.mock.calls[0][0]("foo")).toEqual("from-localstorage");
   });
 
   it("should get the window value", () => {
-    const { Config } = createConfig({ namespace: "test", storage });
+    const { Config } = createConfig<IConfig>({ namespace: "test", storage });
     const children = jest.fn(() => <div />);
 
-    set(window, "test.foo", "from-window");
+    render(<Config children={children} />);
 
-    render(<Config path="foo" defaultValue="from-default" children={children} />);
-
-    expect(children).toBeCalledWith("from-window");
-    delete (window as any).test.foo;
-  });
-
-  it("should get the default value", () => {
-    const { Config } = createConfig({ namespace: "test", storage });
-    const children = jest.fn(() => <div />);
-
-    render(<Config path="foo" defaultValue="from-default" children={children} />);
-
-    expect(children).toBeCalledWith("from-default");
+    expect(children.mock.calls[0][0]("foo")).toEqual("from-window");
   });
 
   it("should ignore trailing dot in the namespace", () => {
-    const { Config } = createConfig({ namespace: "test.", storage });
+    const { Config } = createConfig<IConfig>({ namespace: "test.", storage });
     const children = jest.fn(() => <div />);
 
     storage.setItem("test.foo", "from-localstorage");
 
-    render(<Config path="foo" defaultValue="from-default" children={children} />);
+    render(<Config children={children} />);
 
-    expect(children).toBeCalledWith("from-localstorage");
+    expect(children.mock.calls[0][0]("foo")).toEqual("from-localstorage");
   });
 
   it("should rerender the component on localstorage update", () => {
-    const { Config } = createConfig({ namespace: "test", storage });
+    const { Config } = createConfig<IConfig>({ namespace: "test", storage });
     const children = jest.fn(() => <div />);
 
     storage.setItem("test.foo", "from-localstorage");
 
-    render(<Config path="foo" defaultValue="from-default" children={children} />);
+    render(<Config children={children} />);
 
-    expect(children).toBeCalledWith("from-localstorage");
+    expect(children.mock.calls[0][0]("foo")).toEqual("from-localstorage");
 
     storage.setItem("test.foo", "from-localstorage-modified");
     window.dispatchEvent(new Event("storage"));
 
     expect(children.mock.calls.length).toEqual(2);
-    expect(children).toBeCalledWith("from-localstorage-modified");
+    expect(children.mock.calls[0][0]("foo")).toEqual("from-localstorage-modified");
   });
 
   it("should not rerender the component on localstorage update if localOveride is disable", () => {
-    const { Config } = createConfig({ namespace: "test", storage, localOverride: false });
+    const { Config } = createConfig<IConfig>({ namespace: "test", storage, localOverride: false });
     const children = jest.fn(() => <div />);
 
     storage.setItem("test.foo", "from-localstorage");
 
-    render(<Config path="foo" defaultValue="from-default" children={children} />);
+    render(<Config children={children} />);
 
     storage.setItem("test.foo", "from-localstorage-modified");
     window.dispatchEvent(new Event("storage"));
 
     expect(children.mock.calls.length).toEqual(1);
-    expect(children).toBeCalledWith("from-default");
+    expect(children.mock.calls[0][0]("foo")).toEqual("from-window");
   });
 
   it("should throw if the value is not set in window", () => {
-    const { Config } = createConfig({ namespace: "test", storage, forceWindowConfig: true });
-    const children = jest.fn(() => <div />);
+    delete (window as any).test.foo;
+    const { Config } = createConfig<IConfig>({ namespace: "test", storage });
 
-    expect(() => render(<Config path="foo" defaultValue="from-default" children={children} />)).toThrowError(
+    expect(() => render(<Config children={getConfig => getConfig("foo")} />)).toThrowError(
       "INVALID CONFIG: foo must be present inside config map, under window.test.",
     );
   });
 
-  it("should throw if the value is not set in window (force in component)", () => {
-    const { Config } = createConfig({ namespace: "test", storage, forceWindowConfig: false });
-    const children = jest.fn(() => <div />);
-
-    expect(() =>
-      render(<Config path="foo" defaultValue="from-default" children={children} forceWindowConfig />),
-    ).toThrowError("INVALID CONFIG: foo must be present inside config map, under window.test.");
-  });
-
   describe("boolean values", () => {
     it("should return true from window config", () => {
-      const { Config } = createConfig({ namespace: "test", storage });
+      const { Config } = createConfig<IConfig>({ namespace: "test", storage });
       const children = jest.fn(() => <div />);
 
-      set(window, "test.foo", true);
-      render(<Config path="foo" defaultValue={false} children={children} />);
+      set(window, "test.aBoolean", true);
+      render(<Config children={children} />);
 
-      expect(children).toBeCalledWith(true);
-      delete (window as any).test.foo;
+      expect(children.mock.calls[0][0]("aBoolean")).toEqual(true);
     });
 
     it("should return false from window config", () => {
-      const { Config } = createConfig({ namespace: "test", storage });
+      const { Config } = createConfig<IConfig>({ namespace: "test", storage });
       const children = jest.fn(() => <div />);
 
-      set(window, "test.foo", false);
-      render(<Config path="foo" defaultValue={true} children={children} />);
+      set(window, "test.aBoolean", false);
+      render(<Config children={children} />);
 
-      expect(children).toBeCalledWith(false);
-      delete (window as any).test.foo;
+      expect(children.mock.calls[0][0]("aBoolean")).toEqual(false);
     });
 
     it("should return true from localstorage config", () => {
-      const { Config } = createConfig({ namespace: "test", storage });
+      const { Config } = createConfig<IConfig>({ namespace: "test", storage });
       const children = jest.fn(() => <div />);
 
+      set(window, "test.foo", false);
       storage.setItem("test.foo", "true");
-      render(<Config path="foo" defaultValue={false} children={children} />);
+      render(<Config children={children} />);
 
-      expect(children).toBeCalledWith(true);
+      expect(children.mock.calls[0][0]("foo")).toEqual(true);
     });
 
     it("should return false from localstorage config", () => {
-      const { Config } = createConfig({ namespace: "test", storage });
+      const { Config } = createConfig<IConfig>({ namespace: "test", storage });
       const children = jest.fn(() => <div />);
 
+      set(window, "test.foo", true);
       storage.setItem("test.foo", "false");
-      render(<Config path="foo" defaultValue={true} children={children} />);
+      render(<Config children={children} />);
 
-      expect(children).toBeCalledWith(false);
-    });
-
-    it("should return true from defaultValue", () => {
-      const { Config } = createConfig({ namespace: "test", storage });
-      const children = jest.fn(() => <div />);
-
-      render(<Config path="foo" defaultValue={true} children={children} />);
-
-      expect(children).toBeCalledWith(true);
-    });
-
-    it("should return false from defaultValue", () => {
-      const { Config } = createConfig({ namespace: "test", storage });
-      const children = jest.fn(() => <div />);
-
-      render(<Config path="foo" defaultValue={false} children={children} />);
-
-      expect(children).toBeCalledWith(false);
+      expect(children.mock.calls[0][0]("foo")).toEqual(false);
     });
   });
 
   describe("multiple values syntax", () => {
-    it("should return the default value", () => {
-      const { Config } = createConfig({ namespace: "test", storage });
+    it("should return the value from the localstorage", () => {
+      const { Config } = createConfig<IConfig>({ namespace: "test", storage });
       const children = jest.fn(() => <div />);
 
+      storage.setItem("test.foo", "from-localstorage");
       render(<Config children={children} />);
 
-      expect(children.mock.calls[0][0]("plop", "plop-from-default")).toEqual("plop-from-default");
+      expect(children.mock.calls[0][0]("foo")).toEqual("from-localstorage");
     });
 
-    it("should return the value from the localstorage", () => {
-      const { Config } = createConfig({ namespace: "test", storage });
-      const children = jest.fn(() => <div />);
+    it("should have correct type definition", () => {
+      const { Config } = createConfig<IConfig>({ namespace: "test", storage });
+      render(
+        <Config>
+          {getConfig => {
+            const val: boolean = getConfig("aBoolean");
+            const val2: string = getConfig("donald");
+            return (
+              <h1>
+                {val}
+                {val2}
+              </h1>
+            );
+          }}
+        </Config>,
+      );
 
-      storage.setItem("test.plop", "plop-from-localstorage");
-      render(<Config children={children} />);
-
-      expect(children.mock.calls[0][0]("plop", "plop-from-default")).toEqual("plop-from-localstorage");
+      expect(1).toBe(1);
     });
   });
 
   describe("configList", () => {
     it("should return the entire list of paths", () => {
-      const { Config, configList } = createConfig({ namespace: "test", storage });
-      const children = jest.fn(() => <div />);
+      const { Config, configList } = createConfig<IConfig>({ namespace: "test", storage });
 
-      render(<Config path="picsou" defaultValue={true} children={children} />);
-      render(<Config path="donald" defaultValue={false} children={children} />);
-      render(<Config path="riri" defaultValue={true} children={children} />);
-      render(<Config path="loulou" defaultValue={false} children={children} />);
+      render(<Config children={getConfig => getConfig("picsou")} />);
+      render(<Config children={getConfig => getConfig("donald")} />);
+      render(<Config children={getConfig => getConfig("riri")} />);
+      render(<Config children={getConfig => getConfig("loulou")} />);
 
       expect(Array.from(configList)).toEqual(["picsou", "donald", "riri", "loulou"]);
     });
 
     it("should return the entire list of paths (without duplicate)", () => {
-      const { Config, configList } = createConfig({ namespace: "test", storage });
-      const children = jest.fn(() => <div />);
+      const { Config, configList } = createConfig<IConfig>({ namespace: "test", storage });
 
-      render(<Config path="picsou" defaultValue={true} children={children} />);
-      render(<Config path="donald" defaultValue={false} children={children} />);
-      render(<Config path="picsou" defaultValue={true} children={children} />);
-      render(<Config path="riri" defaultValue={true} children={children} />);
-      render(<Config path="loulou" defaultValue={false} children={children} />);
-      render(<Config path="picsou" defaultValue={true} children={children} />);
+      render(<Config children={getConfig => getConfig("picsou")} />);
+      render(<Config children={getConfig => getConfig("picsou")} />);
+      render(<Config children={getConfig => getConfig("donald")} />);
+      render(<Config children={getConfig => getConfig("donald")} />);
+      render(<Config children={getConfig => getConfig("riri")} />);
+      render(<Config children={getConfig => getConfig("donald")} />);
+      render(<Config children={getConfig => getConfig("loulou")} />);
 
       expect(Array.from(configList)).toEqual(["picsou", "donald", "riri", "loulou"]);
     });

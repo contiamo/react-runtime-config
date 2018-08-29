@@ -12,7 +12,7 @@
   ],
   "scripts": {
     "test": "operational-scripts test",
-    "build": "operational-scripts build",
+    "build": "operational-scripts build --for npm",
     "prepublishOnly": "operational-scripts prepare"
   },
   "keywords": [

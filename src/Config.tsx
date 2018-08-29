@@ -1,27 +1,9 @@
 import get from "lodash/get";
 import React from "react";
 
-function isWithPath<T>(
-  props: Readonly<ConfigProps<T> & InjectedConfigProps> & Readonly<{ children?: React.ReactNode }>,
-): props is ConfigPropsWithPath<T> & InjectedConfigProps {
-  return Boolean(props && props.path !== undefined);
+export interface ConfigProps<T> {
+  children: (getConfig: (<K extends keyof T = Extract<keyof T, string>>(path: K) => T[K])) => React.ReactNode;
 }
-
-export interface ConfigPropsWithPath<T> {
-  path: string;
-  defaultValue: T;
-  forceWindowConfig?: boolean;
-  children: (value: T) => React.ReactNode;
-}
-
-export interface ConfigPropsWithoutPath {
-  path?: never;
-  defaultValue?: never;
-  forceWindowConfig?: boolean;
-  children: (getConfig: <T>(path: string, defaultValue: T) => T) => React.ReactNode;
-}
-
-export type ConfigProps<T> = ConfigPropsWithPath<T> | ConfigPropsWithoutPath;
 
 export interface InjectedConfigProps {
   localOverride: boolean;
@@ -44,40 +26,26 @@ export class Config<T> extends React.Component<ConfigProps<T> & InjectedConfigPr
   }
 
   public render() {
-    if (isWithPath(this.props)) {
-      return this.props.children(this.getConfig(this.props.path, this.props.defaultValue) as T);
-    } else {
-      return this.props.children(this.getConfig.bind(this));
-    }
+    return this.props.children(this.getConfig.bind(this));
   }
 
   /**
    * Get a value from the config
    */
-  private getConfig<U>(path: string, defaultValue: U): U {
+  private getConfig<U>(path: string): U {
     // Update global config list
     this.props.configList.add(path);
 
     const storageValue = this.getStorageValue(path);
     const windowValue = get(window, `${this.props.namespace}${path}`, null);
 
-    if (this.props.forceWindowConfig && windowValue === null) {
+    if (windowValue === null) {
       throw new Error(
-        process.env.NODE_ENV !== "production"
-          ? `INVALID CONFIG: ${path} must be present inside config map, under window.${this.props.namespace}`
-          : "INVALID CONFIG MAP",
+        `INVALID CONFIG: ${path} must be present inside config map, under window.${this.props.namespace}`,
       );
     }
 
-    let value = defaultValue;
-
-    if (storageValue !== null) {
-      value = storageValue;
-    } else if (windowValue !== null) {
-      value = windowValue;
-    }
-
-    return value as U;
+    return storageValue !== null ? storageValue : windowValue;
   }
 
   /**
