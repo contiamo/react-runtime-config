@@ -187,9 +187,11 @@ describe("react-runtime-config", () => {
       const { Config } = createConfig<IConfig>({ namespace: "test", storage });
       render(
         <Config>
-          {getConfig => {
+          {(getConfig, setConfig) => {
             const val: boolean = getConfig("aBoolean");
             const val2: string = getConfig("donald");
+            setConfig("loulou", "plop");
+            setConfig("aBoolean", true);
             return (
               <h1>
                 {val}

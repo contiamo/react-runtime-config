@@ -2,7 +2,10 @@ import get from "lodash/get";
 import React from "react";
 
 export interface ConfigProps<T> {
-  children: (getConfig: (<K extends keyof T = Extract<keyof T, string>>(path: K) => T[K])) => React.ReactNode;
+  children: (
+    getConfig: <K extends keyof T = Extract<keyof T, string>>(path: K) => T[K],
+    setConfig: <K extends keyof T = Extract<keyof T, string>>(path: K, value: T[K]) => void,
+  ) => React.ReactNode;
 }
 
 export interface InjectedConfigProps {
@@ -26,13 +29,13 @@ export class Config<T> extends React.Component<ConfigProps<T> & InjectedConfigPr
   }
 
   public render() {
-    return this.props.children(this.getConfig.bind(this));
+    return this.props.children(this.getConfig.bind(this), this.setConfig.bind(this));
   }
 
   /**
    * Get a value from the config
    */
-  private getConfig<U>(path: string): U {
+  private getConfig<K extends Extract<keyof T, string> = Extract<keyof T, string>>(path: K): T[K] {
     // Update global config list
     this.props.configList.add(path);
 
@@ -46,6 +49,17 @@ export class Config<T> extends React.Component<ConfigProps<T> & InjectedConfigPr
     }
 
     return storageValue !== null ? storageValue : windowValue;
+  }
+
+  /**
+   * Local override a specific config value.
+   *
+   * @param path
+   * @param value
+   */
+  private setConfig<K extends keyof T = Extract<keyof T, string>>(path: K, value: T[K]) {
+    this.props.storage.setItem(`${this.props.namespace}${path}`, String(value));
+    window.dispatchEvent(new Event("storage"));
   }
 
   /**

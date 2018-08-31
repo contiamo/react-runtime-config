@@ -88,11 +88,5 @@ interface ConfigOptions {
    * @default true
    */
   localOverride?: boolean;
-  /**
-   * Throw an error if the config value is not set in window
-   *
-   * @default false
-   */
-  forceWindowConfig?: boolean;
 }
 ```
