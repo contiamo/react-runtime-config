@@ -8,6 +8,7 @@
 - [Usage](#usage)
 - [Options](#options)
 - [Create an administration page](#create-an-administration-page)
+- [If needed](#if-needed)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -119,3 +120,9 @@ export default (ConfirationPage = () => (
 ```
 
 You have also access to `field.windowValue` and `field.storageValue` if you want implement more advanced UX on this page.
+
+## If needed
+
+We also expose from `createConfig` a simple `getConfig` and `setConfig`. These functions can be use as standalone and are exactly the same as these available inside `Config` component.
+
+The only thing that you loose is the hot config reload :wink:
