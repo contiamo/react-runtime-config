@@ -218,21 +218,9 @@ describe("react-runtime-config", () => {
       config = createConfig<IConfig>({ namespace: "test", storage });
       children = jest.fn(() => <div />);
 
-      const { Config, AdminConfig } = config;
+      const { AdminConfig } = config;
 
       storage.setItem("test.picsou", "$$$");
-
-      // setup a sample project that use some Config
-      render(
-        <Config>
-          {getConfig => {
-            getConfig("picsou");
-            getConfig("loulou");
-            getConfig("riri");
-            return <div />;
-          }}
-        </Config>,
-      );
 
       // expose children called by AdminConfig
       render(<AdminConfig>{children}</AdminConfig>);
@@ -241,8 +229,11 @@ describe("react-runtime-config", () => {
     it("should return all the config fields", () => {
       const expectedFields = [
         { path: "picsou", storageValue: "$$$", value: "$$$", windowValue: "a" },
-        { path: "loulou", storageValue: null, value: "d", windowValue: "d" },
+        { path: "donald", storageValue: null, value: "b", windowValue: "b" },
         { path: "riri", storageValue: null, value: "c", windowValue: "c" },
+        { path: "loulou", storageValue: null, value: "d", windowValue: "d" },
+        { path: "foo", storageValue: null, value: "from-window", windowValue: "from-window" },
+        { path: "aBoolean", storageValue: null, value: true, windowValue: true },
       ];
       expect(children.mock.calls[0][0].fields).toEqual(expectedFields);
     });
@@ -252,8 +243,11 @@ describe("react-runtime-config", () => {
 
       const expectedFields = [
         { path: "picsou", storageValue: "$$$", value: "plop", windowValue: "a" },
-        { path: "loulou", storageValue: null, value: "d", windowValue: "d" },
+        { path: "donald", storageValue: null, value: "b", windowValue: "b" },
         { path: "riri", storageValue: null, value: "c", windowValue: "c" },
+        { path: "loulou", storageValue: null, value: "d", windowValue: "d" },
+        { path: "foo", storageValue: null, value: "from-window", windowValue: "from-window" },
+        { path: "aBoolean", storageValue: null, value: true, windowValue: true },
       ];
 
       expect(children.mock.calls[1][0].fields).toEqual(expectedFields);
@@ -274,8 +268,11 @@ describe("react-runtime-config", () => {
 
       const expectedFields = [
         { path: "picsou", storageValue: null, value: "a", windowValue: "a" },
-        { path: "loulou", storageValue: null, value: "d", windowValue: "d" },
+        { path: "donald", storageValue: null, value: "b", windowValue: "b" },
         { path: "riri", storageValue: null, value: "c", windowValue: "c" },
+        { path: "loulou", storageValue: null, value: "d", windowValue: "d" },
+        { path: "foo", storageValue: null, value: "from-window", windowValue: "from-window" },
+        { path: "aBoolean", storageValue: null, value: true, windowValue: true },
       ];
 
       expect(children.mock.calls[2][0].fields).toEqual(expectedFields);

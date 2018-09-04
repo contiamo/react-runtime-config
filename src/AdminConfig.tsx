@@ -1,5 +1,6 @@
 import get from "lodash/get";
 import React from "react";
+
 import { InjectedProps } from ".";
 
 export type Field<T, K extends keyof T = Extract<keyof T, string>> = Array<{
@@ -50,7 +51,7 @@ export class AdminConfig<T> extends React.Component<AdminConfigProps<T> & Inject
   }
 
   public render() {
-    const fields = Array.from(this.props.configList).map(path => ({
+    const fields = this.getConfigKeys().map(path => ({
       path,
       windowValue: this.props.getWindowValue(path),
       storageValue: this.props.getStorageValue(path),
@@ -86,12 +87,12 @@ export class AdminConfig<T> extends React.Component<AdminConfigProps<T> & Inject
    */
   private onReset = () => {
     // Reset storage
-    Array.from(this.props.configList).forEach(path => {
+    this.getConfigKeys().forEach(path => {
       this.props.storage.removeItem(`${this.props.namespace}${path}`);
     });
 
     // Reset user values
-    this.setState(() => Array.from(this.props.configList).reduce((mem, path) => ({ ...mem, [path]: undefined }), {}));
+    this.setState(() => this.getConfigKeys().reduce((mem, path) => ({ ...mem, [path]: undefined }), {}));
   };
 
   /**
@@ -101,6 +102,14 @@ export class AdminConfig<T> extends React.Component<AdminConfigProps<T> & Inject
     if (this.props.storage && this.props.localOverride) {
       this.forceUpdate();
     }
+  };
+
+  /**
+   * Returns every config keys set in `window.{namespace}`
+   */
+  private getConfigKeys = (): Array<Extract<keyof T, string>> => {
+    // `slice(0, -1)`is for removing the trailing point
+    return Object.keys(get(window, this.props.namespace.slice(0, -1))) as any;
   };
 }
 

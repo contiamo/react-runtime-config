@@ -24,7 +24,6 @@ export interface InjectedProps<TConfig> {
   localOverride: boolean;
   namespace: string;
   storage: Storage;
-  configList: Set<Extract<keyof TConfig, string>>;
   getConfig: <K extends Extract<keyof TConfig, string> = Extract<keyof TConfig, string>>(path: K) => TConfig[K];
   setConfig: <K extends Extract<keyof TConfig, string> = Extract<keyof TConfig, string>>(
     path: K,
@@ -36,12 +35,10 @@ export interface InjectedProps<TConfig> {
 
 export function createConfig<TConfig>(options: ConfigOptions) {
   // List of `path` use in the application
-  const configList = new Set<Extract<keyof TConfig, string>>();
   const { namespace } = options;
   const injected = {
     storage: window.localStorage,
     localOverride: true,
-    configList,
     ...options,
     namespace: namespace.slice(-1) === "." ? namespace : `${namespace}.`,
   };
@@ -58,8 +55,6 @@ export function createConfig<TConfig>(options: ConfigOptions) {
   const getWindowValue = (path: Extract<keyof TConfig, string>) => get(window, `${injected.namespace}${path}`, null);
 
   function getConfig<K extends Extract<keyof TConfig, string> = Extract<keyof TConfig, string>>(path: K): TConfig[K] {
-    configList.add(path);
-
     const storageValue = getStorageValue(path);
     const windowValue = getWindowValue(path);
 
