@@ -107,6 +107,8 @@ export function createConfig<TConfig>(options: ConfigOptions) {
         />
       );
     },
+    getConfig,
+    setConfig,
   };
 }
 
