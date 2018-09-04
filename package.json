@@ -1,6 +1,6 @@
 {
   "name": "react-runtime-config",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Provide a runtime configuration inside a react app",
   "repository": {
     "type": "git",
