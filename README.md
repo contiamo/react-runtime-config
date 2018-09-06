@@ -1,4 +1,26 @@
-# React runtime config
+<p align="center">
+  <img src="https://github.com/contiamo/react-runtime-config/raw/master/assets/react-runtime-config-logo.png" alt="react-runtime-config" height="160" />
+</p>
+
+<h4 align="center">
+  Make your application easily configurable.
+</h4>
+
+<p align="center">
+  The simple way to provide a runtime configuration for your React application, with localstorage override and hot-reload⚡️!
+</p>
+
+<p align="center">
+  <a href="https://www.npmjs.com/package/react-runtime-config">
+    <img src="https://img.shields.io/npm/v/react-runtime-config/latest.svg" alt="npm (tag)" />
+  </a>
+  <a href="">
+    <img src="https://img.shields.io/travis/contiamo/react-runtime-config/master.svg" alt="travis (tag)" />
+  </a>
+  <img src="https://img.shields.io/github/license/mashape/apistatus.svg" alt="license MIT (tag)" />
+</p>
+
+## Summary
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
