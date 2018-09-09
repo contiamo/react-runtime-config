@@ -123,7 +123,7 @@ describe("react-runtime-config", () => {
     });
 
     it("should throw if the value is not set in window", () => {
-      delete (window as any).test.foo;
+      unset(window, "test.foo");
       const { Config } = createConfig<IConfig>({ namespace: "test", storage });
 
       expect(() => render(<Config children={getConfig => getConfig("foo")} />)).toThrowError(
@@ -175,38 +175,69 @@ describe("react-runtime-config", () => {
       });
     });
 
-    describe("multiple values syntax", () => {
-      it("should return the value from the localstorage", () => {
-        const { Config } = createConfig<IConfig>({ namespace: "test", storage });
+    describe("default values", () => {
+      it("should return the default value", () => {
+        unset(window, "test.foo");
+        const { Config } = createConfig<IConfig>({
+          namespace: "test",
+          storage,
+          defaultValues: { foo: "from-default" },
+        });
         const children = jest.fn(() => <div />);
 
+        render(<Config children={children} />);
+
+        expect(children.mock.calls[0][0]("foo")).toEqual("from-default");
+      });
+
+      it("should return the window value if defined", () => {
+        const { Config } = createConfig<IConfig>({
+          namespace: "test",
+          storage,
+          defaultValues: { foo: "from-default" },
+        });
+        const children = jest.fn(() => <div />);
+
+        render(<Config children={children} />);
+
+        expect(children.mock.calls[0][0]("foo")).toEqual("from-window");
+      });
+
+      it("should return the storage value if defined", () => {
+        const { Config } = createConfig<IConfig>({
+          namespace: "test",
+          storage,
+          defaultValues: { foo: "from-default" },
+        });
+        const children = jest.fn(() => <div />);
         storage.setItem("test.foo", "from-localstorage");
+
         render(<Config children={children} />);
 
         expect(children.mock.calls[0][0]("foo")).toEqual("from-localstorage");
       });
+    });
 
-      it("should have correct type definition", () => {
-        const { Config } = createConfig<IConfig>({ namespace: "test", storage });
-        render(
-          <Config>
-            {(getConfig, setConfig) => {
-              const val: boolean = getConfig("aBoolean");
-              const val2: string = getConfig("donald");
-              setConfig("loulou", "plop");
-              setConfig("aBoolean", true);
-              return (
-                <h1>
-                  {val}
-                  {val2}
-                </h1>
-              );
-            }}
-          </Config>,
-        );
+    it("should have correct type definition", () => {
+      const { Config } = createConfig<IConfig>({ namespace: "test", storage });
+      render(
+        <Config>
+          {(getConfig, setConfig) => {
+            const val: boolean = getConfig("aBoolean");
+            const val2: string = getConfig("donald");
+            setConfig("loulou", "plop");
+            setConfig("aBoolean", true);
+            return (
+              <h1>
+                {val}
+                {val2}
+              </h1>
+            );
+          }}
+        </Config>,
+      );
 
-        expect(1).toBe(1);
-      });
+      expect(1).toBe(1);
     });
   });
 
