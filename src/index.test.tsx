@@ -175,13 +175,13 @@ describe("react-runtime-config", () => {
       });
     });
 
-    describe("default values", () => {
-      it("should return the default value", () => {
+    describe("default config", () => {
+      it("should return the default config value", () => {
         unset(window, "test.foo");
         const { Config } = createConfig<IConfig>({
           namespace: "test",
           storage,
-          defaultValues: { foo: "from-default" },
+          defaultConfig: { foo: "from-default" },
         });
         const children = jest.fn(() => <div />);
 
@@ -194,7 +194,7 @@ describe("react-runtime-config", () => {
         const { Config } = createConfig<IConfig>({
           namespace: "test",
           storage,
-          defaultValues: { foo: "from-default" },
+          defaultConfig: { foo: "from-default" },
         });
         const children = jest.fn(() => <div />);
 
@@ -207,7 +207,7 @@ describe("react-runtime-config", () => {
         const { Config } = createConfig<IConfig>({
           namespace: "test",
           storage,
-          defaultValues: { foo: "from-default" },
+          defaultConfig: { foo: "from-default" },
         });
         const children = jest.fn(() => <div />);
         storage.setItem("test.foo", "from-localstorage");

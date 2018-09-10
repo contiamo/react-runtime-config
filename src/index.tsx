@@ -9,7 +9,7 @@ export interface ConfigOptions<TConfig> {
   /**
    * Config default values
    */
-  defaultValues?: Partial<TConfig>;
+  defaultConfig?: Partial<TConfig>;
   /**
    * Storage adapter
    *
@@ -67,7 +67,7 @@ export function createConfig<TConfig>(options: ConfigOptions<TConfig>) {
    * Get a config value from storage, window or defaultValues
    */
   function getConfig<K extends Extract<keyof TConfig, string> = Extract<keyof TConfig, string>>(path: K): TConfig[K] {
-    const defaultValue = options.defaultValues && options.defaultValues[path];
+    const defaultValue = options.defaultConfig && options.defaultConfig[path];
     const storageValue = getStorageValue(path);
     const windowValue = getWindowValue(path);
 

@@ -68,9 +68,17 @@ First of all, you need to create a namespace for your config.
 // components/Config.tsx
 import createConfig from "react-runtime-config";
 
-export interface IConfig {
-  color: string;
+// All config values that need to be set in window
+interface MandatoryConfig {
+  backendUrl: string;
 }
+
+// All other config values
+const defaultConfig = {
+  color: "pink",
+};
+
+export type IConfig = MandoryConfig & typeof defaultConfig;
 
 export const { Config, AdminConfig } = createConfig<IConfig>({ namespace: "myapp" });
 
@@ -92,6 +100,7 @@ The fallback order is the following:
 
 - `localStorage.getItem("myapp.color")`
 - `window.myapp.color`
+- `defaultConfig.color`
 
 ## Options
 
