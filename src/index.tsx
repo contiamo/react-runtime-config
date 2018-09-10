@@ -4,8 +4,12 @@ import React from "react";
 import AdminConfigBase, { AdminConfigProps } from "./AdminConfig";
 import ConfigBase, { ConfigProps } from "./Config";
 
-export interface ConfigOptions {
+export interface ConfigOptions<TConfig> {
   namespace: string;
+  /**
+   * Config default values
+   */
+  defaultConfig?: Partial<TConfig>;
   /**
    * Storage adapter
    *
@@ -33,8 +37,7 @@ export interface InjectedProps<TConfig> {
   getStorageValue: (path: Extract<keyof TConfig, string>) => string | boolean | null;
 }
 
-export function createConfig<TConfig>(options: ConfigOptions) {
-  // List of `path` use in the application
+export function createConfig<TConfig>(options: ConfigOptions<TConfig>) {
   const { namespace } = options;
   const injected = {
     storage: window.localStorage,
@@ -43,6 +46,9 @@ export function createConfig<TConfig>(options: ConfigOptions) {
     namespace: namespace.slice(-1) === "." ? namespace : `${namespace}.`,
   };
 
+  /**
+   * Get a config value from the storage (localstorage by default)
+   */
   const getStorageValue = (path: Extract<keyof TConfig, string>) => {
     if (injected.storage && injected.localOverride) {
       const value = injected.storage.getItem(`${injected.namespace}${path}`);
@@ -52,17 +58,24 @@ export function createConfig<TConfig>(options: ConfigOptions) {
     }
   };
 
+  /**
+   * Get a config value from window)
+   */
   const getWindowValue = (path: Extract<keyof TConfig, string>) => get(window, `${injected.namespace}${path}`, null);
 
+  /**
+   * Get a config value from storage, window or defaultValues
+   */
   function getConfig<K extends Extract<keyof TConfig, string> = Extract<keyof TConfig, string>>(path: K): TConfig[K] {
+    const defaultValue = options.defaultConfig && options.defaultConfig[path];
     const storageValue = getStorageValue(path);
     const windowValue = getWindowValue(path);
 
-    if (windowValue === null) {
+    if (windowValue === null && defaultValue === undefined) {
       throw new Error(`INVALID CONFIG: ${path} must be present inside config map, under window.${injected.namespace}`);
     }
 
-    return storageValue !== null ? storageValue : windowValue;
+    return storageValue !== null ? storageValue : windowValue !== null ? windowValue : defaultValue;
   }
 
   function setConfig<K extends Extract<keyof TConfig, string> = Extract<keyof TConfig, string>>(
