@@ -1,13 +1,13 @@
-<p align="center">
+<div align="center">
   <img src="https://github.com/contiamo/react-runtime-config/raw/master/assets/react-runtime-config-logo.png" alt="react-runtime-config" height="140" />
-</p>
+</div>
 
 <h4 align="center">
   Make your application easily configurable.
 </h4>
 
 <p align="center">
-  The simple way to provide a runtime configuration for your React application, with localstorage override and hot-reload⚡️!
+  A simple way to provide runtime configuration for your React application, with localStorage overrides and hot-reload support ⚡️!
 </p>
 
 <p align="center">
@@ -25,67 +25,91 @@
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 
+
 - [Why](#why)
+- [How](#how)
 - [Getting started](#getting-started)
-- [Usage](#usage)
-- [Options](#options)
-- [Create an administration page](#create-an-administration-page)
-- [If needed](#if-needed)
+  - [Usage](#usage)
+    - [Options](#options)
+- [Create an Administration Page](#create-an-administration-page)
+- [Moar Power (if needed)](#moar-power-if-needed)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
 ## Why
 
-As front-end developer, we often need to deal with an external environment (servers, clients need for example).
-To response to this flexibility, a runtime configuration is just perfect!
+Most web applications usually need to support and function within a variety of distinct environments: local, development, staging, production, on-prem, etc. This project aims to provide flexibility to React applications by making certain properties configurable at runtime, allowing the app to be customized based on a pre-determined configmap respective to the environment. This is especially powerful when combined with [Kubernetes configmaps](https://kubernetes.io/docs/tasks/configure-pod-container/configure-pod-configmap/).
 
-Indeed, with runtime configuration, we can provide a generic application and permit a total customization of this one:
+Here are examples of some real-world values that can be helpful when configurable at runtime:
 
-- theme constant
-- backend url
-- feature flippings
-- enable dev-tools :)
+- Primary Color
+- Backend API URL
+- Feature Flags
 - …
 
-With this package, the idea is to have a conveniant way to have a runtime configuration inside a react application.
+## How
 
-The configuration can be set by:
+The configuration can be set by _either_:
 
-- injecting an object into `window` as base configuration, very easy to manipulate in server side or ops
-- local override into `localStorage`, so it's easy to have a custom environment on dev
+- setting a configuration property on `window` with reasonable defaults. Consider,
 
-And we can consume this configuration easily, with a simple react component.
+```js
+window.MY_APP_CONFIG = {
+  primaryColor: "green",
+};
+```
+
+- _or_ by setting a value in `localStorage`. Consider,
+
+```js
+localStorage.setItem("MY_APP_CONFIG.primaryColor", "green");
+```
+
+The `localStorage` option could provide a nice delineation between environments: you _could_ set your local environment to green, and staging to red for example, in order to never be confused about what you're looking at when developing locally and testing against a deployed development environment: if it's green, it's local.
+
+This configuration is then easily read by the simple React component that this library exports.
 
 ## Getting started
 
 1. `npm i react-runtime-config`
-
-## Usage
-
-First of all, you need to create a namespace for your config.
+1. Create a namespace for your config:
 
 ```tsx
 // components/Config.tsx
 import createConfig from "react-runtime-config";
 
-// All config values that need to be set in window
+/**
+ * All config values that need to be set in window.
+ * Errors will be thrown if these values do not exist.
+ */
 interface MandatoryConfig {
   backendUrl: string;
 }
 
-// All other config values
+// All optional config values.
 const defaultConfig = {
   color: "pink",
 };
 
-export type IConfig = MandoryConfig & typeof defaultConfig;
+export type ConfigType = MandatoryConfig & typeof defaultConfig;
 
-export const { Config, AdminConfig } = createConfig<IConfig>({ namespace: "myapp" });
+/**
+ * Config and AdminConfig are now React components that
+ * you can use in your app.
+ *
+ * Config reads the config, AdminConfig provides data in order
+ * to visualize your config map with ease. More on this further
+ * down.
+ */
+
+export const { Config, AdminConfig } = createConfig<IConfig>({ namespace: "MY_APP_CONFIG", defaultConfig });
 
 export default Config;
 ```
 
-You can now use the created component everywhere in your application.
+You can now use the created components everywhere in your application.
+
+### Usage
 
 ```tsx
 // components/MyComponents.tsx
@@ -96,17 +120,22 @@ const MyComponent = () => <Config>{getConfig => <h1 style={{ color: getConfig("c
 ```
 
 The title will have a different color regarding our current environment.
-The fallback order is the following:
 
-- `localStorage.getItem("myapp.color")`
-- `window.myapp.color`
+The priority of config values is as follows:
+
+- `localStorage.getItem("MY_APP_CONFIG.color")`
+- `window.MY_APP_CONFIG.color`
 - `defaultConfig.color`
 
-## Options
+#### Options
 
 ```ts
 interface ConfigOptions {
   namespace: string;
+  /**
+   * Config default values
+   */
+  defaultConfig?: Partial<TConfig>;
   /**
    * Storage adapter
    *
@@ -114,7 +143,7 @@ interface ConfigOptions {
    */
   storage?: StorageAdapter;
   /**
-   * Permit to overidde any config values in storage
+   * Permit to override any config values in storage
    *
    * @default true
    */
@@ -122,20 +151,20 @@ interface ConfigOptions {
 }
 ```
 
-## Create an administration page
+## Create an Administration Page
 
-To allow easy management of your configuration, we provide a smart component called `<AdminConfig />` that give you out of the box everything you need to create an awesome administration page.
+To allow easy management of your configuration, we provide a smart component called `<AdminConfig />` that provides all the data that you need in order to assemble an awesome administration page where the configuration of your app can be referenced and managed.
 
-Note, we are using `@operational/components` for this example, but it's obviously working with everything else :wink:
+**Note:** we are using [`@operational/components`](https://github.com/contiamo/operational-components) for this example, but a UI of config values _can_ be assembled with any UI library, or even with plain ole HTML-tag JSX.
 
 ```ts
 // pages/ConfigurationPage.tsx
 import { Page, Card, Input, Button } from "@operational/components";
 import { AdminConfig } from "./components/Config";
 
-export default (ConfirationPage = () => (
+export default () => (
   <Page title="Configuration">
-    <Card title="Configaration">
+    <Card title="Configuration">
       <AdminConfig>
         {({ fields, onFieldChange, submit, reset }) =>
           fields.map(field => (
@@ -147,13 +176,13 @@ export default (ConfirationPage = () => (
       </AdminConfig>
     </Card>
   </Page>
-));
+);
 ```
 
 You have also access to `field.windowValue` and `field.storageValue` if you want implement more advanced UX on this page.
 
-## If needed
+## Moar Power (if needed)
 
-We also expose from `createConfig` a simple `getConfig` and `setConfig`. These functions can be use as standalone and are exactly the same as these available inside `Config` component.
+We also expose from `createConfig` a simple `getConfig` and `setConfig`. These functions can be used standalone and do not require use of the `Config` component. This can be useful for accessing or mutating configuration values in component lifecycle hooks, or anywhere else outside of render.
 
-The only thing that you loose is the hot config reload :wink:
+These functions and are exactly the same as their counterparts available inside the `Config` component, the only thing you lose is the hot config reload.
