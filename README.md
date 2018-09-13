@@ -102,7 +102,7 @@ export type ConfigType = MandatoryConfig & typeof defaultConfig;
  * down.
  */
 
-export const { Config, AdminConfig } = createConfig<IConfig>({ namespace: "myapp" });
+export const { Config, AdminConfig } = createConfig<IConfig>({ namespace: "MY_APP_CONFIG", defaultConfig });
 
 export default Config;
 ```
@@ -123,8 +123,8 @@ The title will have a different color regarding our current environment.
 
 The priority of config values is as follows:
 
-- `localStorage.getItem("myapp.color")`
-- `window.myapp.color`
+- `localStorage.getItem("MY_APP_CONFIG.color")`
+- `window.MY_APP_CONFIG.color`
 - `defaultConfig.color`
 
 #### Options
@@ -132,6 +132,10 @@ The priority of config values is as follows:
 ```ts
 interface ConfigOptions {
   namespace: string;
+  /**
+   * Config default values
+   */
+  defaultConfig?: Partial<TConfig>;
   /**
    * Storage adapter
    *
