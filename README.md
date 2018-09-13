@@ -102,7 +102,7 @@ export type ConfigType = MandatoryConfig & typeof defaultConfig;
  * down.
  */
 
-export const { Config, AdminConfig } = createConfig<IConfig>({ namespace: "MY_APP_CONFIG", defaultConfig });
+export const { Config, AdminConfig } = createConfig<ConfigType>({ namespace: "MY_APP_CONFIG", defaultConfig });
 
 export default Config;
 ```
