@@ -1,0 +1,11 @@
+language: node_js
+node_js:
+  - "8.12.0"
+deploy:
+  provider: npm
+  email: fabien@contiamo.com
+  api_key:
+    secure: hnb+fmx2Hf95AKlt6sMKAaJ/fgbpfsABl3yNnbXbDXzlKNBQ+mxneBwGfkQ17h5s4owdw5VsDRoFgtVmyq0fwOSGK9bugvS6IxvRuznV57AKJTXdaAf4YVLwFeiJIILsXL1x1ftucMoIro3SIrPFfz3VnFyI8nMBvffAYwNFnwE5FMj827n668zHWs5Y93p8Y75dSjHYwppFtNK4yn6sbyurzou87bixET3B/uJSwi9lt2aLTCkWU9pI01SNEJLBvUsTSUrdvszLv6L4zMV7HXpklhADbUGAIF8SXWSfkAiD1rFQlMJinTjNrPz6fdVkFThxeN8bS0ijKEfz0Gb2kaD14mVI3Bmxc/JqXSumhHkoH1CSVtrYBnyFb8AbqdwEdUHkvWp0cQjd/c2QCbO5loDiqy4IwR1cxfW/9JgOhy0eDhqg1sCWd3R/dLZQtmo9/l03kxqcQ2kg8sNysklqZLQ/Av9qPygOHIoSOHf4pzc9JnKSj54G+mQDJ1UT+urmkSr4kKkB942zhPh9cjWZrj/B8SCzG6NNJxOrO3jYaYo52+t+7uzp7h8Iz2ntXVyFBhqRdSTr6zV/xxNK90GLtlgbx3UFq70IlLatRSOLzpxkQ+HUWDwlfr0WF+30QbadeozFfE28d8OvivA1pWiHTIZUJBkQ9Y22wh6JWZ048h0=
+  on:
+    tags: true
+    repo: contiamo/react-runtime-config

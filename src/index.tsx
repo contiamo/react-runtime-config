@@ -1,4 +1,5 @@
 import get from "lodash/get";
+import uniq from "lodash/uniq";
 import React from "react";
 
 import AdminConfigBase, { AdminConfigProps } from "./AdminConfig";
@@ -33,6 +34,7 @@ export interface InjectedProps<TConfig> {
     path: K,
     value: TConfig[K],
   ) => void;
+  getAllConfig: () => TConfig;
   getWindowValue: (path: Extract<keyof TConfig, string>) => any;
   getStorageValue: (path: Extract<keyof TConfig, string>) => string | boolean | null;
 }
@@ -78,6 +80,10 @@ export function createConfig<TConfig>(options: ConfigOptions<TConfig>) {
     return storageValue !== null ? storageValue : windowValue !== null ? windowValue : defaultValue;
   }
 
+  /**
+   * Set a config value in the storage.
+   * This will also remove the value if the value is the same as the window one.
+   */
   function setConfig<K extends Extract<keyof TConfig, string> = Extract<keyof TConfig, string>>(
     path: K,
     value: TConfig[K],
@@ -90,11 +96,23 @@ export function createConfig<TConfig>(options: ConfigOptions<TConfig>) {
     window.dispatchEvent(new Event("storage"));
   }
 
+  /**
+   * Get all consolidate config values.
+   */
+  function getAllConfig(): TConfig {
+    // `slice(0, -1)`is for removing the trailing point
+    const windowKeys = Object.keys(get(window, injected.namespace.slice(0, -1))) as any;
+    const defaultKeys = Object.keys(options.defaultConfig || {});
+
+    return uniq([...windowKeys, ...defaultKeys]).reduce((mem, key) => ({ ...mem, [key]: getConfig(key) }), {});
+  }
+
   return {
     Config(props: ConfigProps<TConfig>) {
       return (
         <ConfigBase
           getConfig={getConfig}
+          getAllConfig={getAllConfig}
           getStorageValue={getStorageValue}
           getWindowValue={getWindowValue}
           setConfig={setConfig}
@@ -107,6 +125,7 @@ export function createConfig<TConfig>(options: ConfigOptions<TConfig>) {
       return (
         <AdminConfigBase
           getConfig={getConfig}
+          getAllConfig={getAllConfig}
           getStorageValue={getStorageValue}
           getWindowValue={getWindowValue}
           setConfig={setConfig}
@@ -117,6 +136,7 @@ export function createConfig<TConfig>(options: ConfigOptions<TConfig>) {
     },
     getConfig,
     setConfig,
+    getAllConfig,
   };
 }
 
