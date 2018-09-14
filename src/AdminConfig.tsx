@@ -105,11 +105,10 @@ export class AdminConfig<T> extends React.Component<AdminConfigProps<T> & Inject
   };
 
   /**
-   * Returns every config keys set in `window.{namespace}`
+   * Returns every config keys
    */
   private getConfigKeys = (): Array<Extract<keyof T, string>> => {
-    // `slice(0, -1)`is for removing the trailing point
-    return Object.keys(get(window, this.props.namespace.slice(0, -1))) as any;
+    return Object.keys(this.props.getAllConfig()) as any;
   };
 }
 

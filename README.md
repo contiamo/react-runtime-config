@@ -25,7 +25,6 @@
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 
-
 - [Why](#why)
 - [How](#how)
 - [Getting started](#getting-started)
@@ -183,6 +182,6 @@ You have also access to `field.windowValue` and `field.storageValue` if you want
 
 ## Moar Power (if needed)
 
-We also expose from `createConfig` a simple `getConfig` and `setConfig`. These functions can be used standalone and do not require use of the `Config` component. This can be useful for accessing or mutating configuration values in component lifecycle hooks, or anywhere else outside of render.
+We also expose from `createConfig` a simple `getConfig`, `getAllConfig` and `setConfig`. These functions can be used standalone and do not require use of the `Config` component. This can be useful for accessing or mutating configuration values in component lifecycle hooks, or anywhere else outside of render.
 
 These functions and are exactly the same as their counterparts available inside the `Config` component, the only thing you lose is the hot config reload.

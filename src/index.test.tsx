@@ -246,7 +246,10 @@ describe("react-runtime-config", () => {
     let children: jest.Mock<JSX.Element>;
 
     beforeEach(() => {
-      config = createConfig<IConfig>({ namespace: "test", storage });
+      const defaultConfig = {
+        batman: "from-default",
+      };
+      config = createConfig<IConfig & typeof defaultConfig>({ namespace: "test", storage, defaultConfig });
       children = jest.fn(() => <div />);
 
       const { AdminConfig } = config;
@@ -265,6 +268,7 @@ describe("react-runtime-config", () => {
         { path: "loulou", storageValue: null, value: "d", windowValue: "d" },
         { path: "foo", storageValue: null, value: "from-window", windowValue: "from-window" },
         { path: "aBoolean", storageValue: null, value: true, windowValue: true },
+        { path: "batman", storageValue: null, value: "from-default", windowValue: null },
       ];
       expect(children.mock.calls[0][0].fields).toEqual(expectedFields);
     });
@@ -279,6 +283,7 @@ describe("react-runtime-config", () => {
         { path: "loulou", storageValue: null, value: "d", windowValue: "d" },
         { path: "foo", storageValue: null, value: "from-window", windowValue: "from-window" },
         { path: "aBoolean", storageValue: null, value: true, windowValue: true },
+        { path: "batman", storageValue: null, value: "from-default", windowValue: null },
       ];
 
       expect(children.mock.calls[1][0].fields).toEqual(expectedFields);
@@ -304,6 +309,7 @@ describe("react-runtime-config", () => {
         { path: "loulou", storageValue: null, value: "d", windowValue: "d" },
         { path: "foo", storageValue: null, value: "from-window", windowValue: "from-window" },
         { path: "aBoolean", storageValue: null, value: true, windowValue: true },
+        { path: "batman", storageValue: null, value: "from-default", windowValue: null },
       ];
 
       expect(children.mock.calls[2][0].fields).toEqual(expectedFields);
