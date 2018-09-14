@@ -14,8 +14,8 @@
   <a href="https://www.npmjs.com/package/react-runtime-config">
     <img src="https://img.shields.io/npm/v/react-runtime-config/latest.svg" alt="npm (tag)" />
   </a>
-  <a href="">
-    <img src="https://img.shields.io/travis/contiamo/react-runtime-config/master.svg" alt="travis (tag)" />
+  <a href="https://travis-ci.org/contiamo/react-runtime-config">
+    <img src="https://travis-ci.org/contiamo/react-runtime-config.svg?branch=master" alt="travis (tag)" />
   </a>
   <img src="https://img.shields.io/github/license/mashape/apistatus.svg" alt="license MIT (tag)" />
 </p>
