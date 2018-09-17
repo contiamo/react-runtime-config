@@ -315,5 +315,24 @@ describe("react-runtime-config", () => {
       expect(children.mock.calls[2][0].fields).toEqual(expectedFields);
       expect(children.mock.calls.length).toBe(3);
     });
+
+    it("should not erase values if I'm submit just after a reset", () => {
+      children.mock.calls[0][0].onFieldChange("picsou", "plop");
+      children.mock.calls[1][0].reset();
+      children.mock.calls[2][0].submit(); // This don't call another loop since all user values are undefined
+
+      const expectedFields = [
+        { path: "picsou", storageValue: null, value: "a", windowValue: "a" },
+        { path: "donald", storageValue: null, value: "b", windowValue: "b" },
+        { path: "riri", storageValue: null, value: "c", windowValue: "c" },
+        { path: "loulou", storageValue: null, value: "d", windowValue: "d" },
+        { path: "foo", storageValue: null, value: "from-window", windowValue: "from-window" },
+        { path: "aBoolean", storageValue: null, value: true, windowValue: true },
+        { path: "batman", storageValue: null, value: "from-default", windowValue: null },
+      ];
+
+      expect(children.mock.calls[2][0].fields).toEqual(expectedFields);
+      expect(children.mock.calls.length).toBe(3);
+    });
   });
 });

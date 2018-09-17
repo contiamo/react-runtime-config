@@ -77,9 +77,11 @@ export class AdminConfig<T> extends React.Component<AdminConfigProps<T> & Inject
    * Update the store regarding the user values
    */
   private onSubmit = () => {
-    Object.entries(this.state).map(([path, value]) => {
-      this.props.setConfig(path as any, value);
-    });
+    Object.entries(this.state)
+      .filter(([, value]) => value !== undefined)
+      .map(([path, value]) => {
+        this.props.setConfig(path as any, value);
+      });
   };
 
   /**
