@@ -262,13 +262,69 @@ describe("react-runtime-config", () => {
 
     it("should return all the config fields", () => {
       const expectedFields = [
-        { path: "picsou", storageValue: "$$$", value: "$$$", windowValue: "a" },
-        { path: "donald", storageValue: null, value: "b", windowValue: "b" },
-        { path: "riri", storageValue: null, value: "c", windowValue: "c" },
-        { path: "loulou", storageValue: null, value: "d", windowValue: "d" },
-        { path: "foo", storageValue: null, value: "from-window", windowValue: "from-window" },
-        { path: "aBoolean", storageValue: null, value: true, windowValue: true },
-        { path: "batman", storageValue: null, value: "from-default", windowValue: null },
+        {
+          path: "picsou",
+          isFromStorage: true,
+          isEditing: false,
+          defaultValue: null,
+          storageValue: "$$$",
+          value: "$$$",
+          windowValue: "a",
+        },
+        {
+          path: "donald",
+          isFromStorage: false,
+          isEditing: false,
+          defaultValue: null,
+          storageValue: null,
+          value: "b",
+          windowValue: "b",
+        },
+        {
+          path: "riri",
+          isFromStorage: false,
+          isEditing: false,
+          defaultValue: null,
+          storageValue: null,
+          value: "c",
+          windowValue: "c",
+        },
+        {
+          path: "loulou",
+          isFromStorage: false,
+          isEditing: false,
+          defaultValue: null,
+          storageValue: null,
+          value: "d",
+          windowValue: "d",
+        },
+        {
+          path: "foo",
+          isFromStorage: false,
+          isEditing: false,
+          defaultValue: null,
+          storageValue: null,
+          value: "from-window",
+          windowValue: "from-window",
+        },
+        {
+          path: "aBoolean",
+          isFromStorage: false,
+          isEditing: false,
+          defaultValue: null,
+          storageValue: null,
+          value: true,
+          windowValue: true,
+        },
+        {
+          path: "batman",
+          isFromStorage: false,
+          isEditing: false,
+          defaultValue: "from-default",
+          storageValue: null,
+          value: "from-default",
+          windowValue: null,
+        },
       ];
       expect(children.mock.calls[0][0].fields).toEqual(expectedFields);
     });
@@ -277,13 +333,69 @@ describe("react-runtime-config", () => {
       children.mock.calls[0][0].onFieldChange("picsou", "plop");
 
       const expectedFields = [
-        { path: "picsou", storageValue: "$$$", value: "plop", windowValue: "a" },
-        { path: "donald", storageValue: null, value: "b", windowValue: "b" },
-        { path: "riri", storageValue: null, value: "c", windowValue: "c" },
-        { path: "loulou", storageValue: null, value: "d", windowValue: "d" },
-        { path: "foo", storageValue: null, value: "from-window", windowValue: "from-window" },
-        { path: "aBoolean", storageValue: null, value: true, windowValue: true },
-        { path: "batman", storageValue: null, value: "from-default", windowValue: null },
+        {
+          path: "picsou",
+          isFromStorage: true,
+          isEditing: true,
+          defaultValue: null,
+          storageValue: "$$$",
+          value: "plop",
+          windowValue: "a",
+        },
+        {
+          path: "donald",
+          isFromStorage: false,
+          isEditing: false,
+          defaultValue: null,
+          storageValue: null,
+          value: "b",
+          windowValue: "b",
+        },
+        {
+          path: "riri",
+          isFromStorage: false,
+          isEditing: false,
+          defaultValue: null,
+          storageValue: null,
+          value: "c",
+          windowValue: "c",
+        },
+        {
+          path: "loulou",
+          isFromStorage: false,
+          isEditing: false,
+          defaultValue: null,
+          storageValue: null,
+          value: "d",
+          windowValue: "d",
+        },
+        {
+          path: "foo",
+          isFromStorage: false,
+          isEditing: false,
+          defaultValue: null,
+          storageValue: null,
+          value: "from-window",
+          windowValue: "from-window",
+        },
+        {
+          path: "aBoolean",
+          isFromStorage: false,
+          isEditing: false,
+          defaultValue: null,
+          storageValue: null,
+          value: true,
+          windowValue: true,
+        },
+        {
+          path: "batman",
+          isFromStorage: false,
+          isEditing: false,
+          defaultValue: "from-default",
+          storageValue: null,
+          value: "from-default",
+          windowValue: null,
+        },
       ];
 
       expect(children.mock.calls[1][0].fields).toEqual(expectedFields);
@@ -295,6 +407,15 @@ describe("react-runtime-config", () => {
       children.mock.calls[0][0].onFieldChange("picsou", "plop");
       children.mock.calls[1][0].submit();
 
+      expect(children.mock.calls[2][0].fields[0]).toEqual({
+        path: "picsou",
+        isFromStorage: true,
+        isEditing: false,
+        defaultValue: null,
+        storageValue: "plop",
+        value: "plop",
+        windowValue: "a",
+      });
       expect(storage.getItem("test.picsou")).toEqual("plop");
     });
 
@@ -303,13 +424,69 @@ describe("react-runtime-config", () => {
       children.mock.calls[1][0].reset();
 
       const expectedFields = [
-        { path: "picsou", storageValue: null, value: "a", windowValue: "a" },
-        { path: "donald", storageValue: null, value: "b", windowValue: "b" },
-        { path: "riri", storageValue: null, value: "c", windowValue: "c" },
-        { path: "loulou", storageValue: null, value: "d", windowValue: "d" },
-        { path: "foo", storageValue: null, value: "from-window", windowValue: "from-window" },
-        { path: "aBoolean", storageValue: null, value: true, windowValue: true },
-        { path: "batman", storageValue: null, value: "from-default", windowValue: null },
+        {
+          path: "picsou",
+          isFromStorage: false,
+          isEditing: false,
+          defaultValue: null,
+          storageValue: null,
+          value: "a",
+          windowValue: "a",
+        },
+        {
+          path: "donald",
+          isFromStorage: false,
+          isEditing: false,
+          defaultValue: null,
+          storageValue: null,
+          value: "b",
+          windowValue: "b",
+        },
+        {
+          path: "riri",
+          isFromStorage: false,
+          isEditing: false,
+          defaultValue: null,
+          storageValue: null,
+          value: "c",
+          windowValue: "c",
+        },
+        {
+          path: "loulou",
+          isFromStorage: false,
+          isEditing: false,
+          defaultValue: null,
+          storageValue: null,
+          value: "d",
+          windowValue: "d",
+        },
+        {
+          path: "foo",
+          isFromStorage: false,
+          isEditing: false,
+          defaultValue: null,
+          storageValue: null,
+          value: "from-window",
+          windowValue: "from-window",
+        },
+        {
+          path: "aBoolean",
+          isFromStorage: false,
+          isEditing: false,
+          defaultValue: null,
+          storageValue: null,
+          value: true,
+          windowValue: true,
+        },
+        {
+          path: "batman",
+          isFromStorage: false,
+          isEditing: false,
+          defaultValue: "from-default",
+          storageValue: null,
+          value: "from-default",
+          windowValue: null,
+        },
       ];
 
       expect(children.mock.calls[2][0].fields).toEqual(expectedFields);
@@ -322,13 +499,69 @@ describe("react-runtime-config", () => {
       children.mock.calls[2][0].submit(); // This don't call another loop since all user values are undefined
 
       const expectedFields = [
-        { path: "picsou", storageValue: null, value: "a", windowValue: "a" },
-        { path: "donald", storageValue: null, value: "b", windowValue: "b" },
-        { path: "riri", storageValue: null, value: "c", windowValue: "c" },
-        { path: "loulou", storageValue: null, value: "d", windowValue: "d" },
-        { path: "foo", storageValue: null, value: "from-window", windowValue: "from-window" },
-        { path: "aBoolean", storageValue: null, value: true, windowValue: true },
-        { path: "batman", storageValue: null, value: "from-default", windowValue: null },
+        {
+          path: "picsou",
+          isFromStorage: false,
+          isEditing: false,
+          defaultValue: null,
+          storageValue: null,
+          value: "a",
+          windowValue: "a",
+        },
+        {
+          path: "donald",
+          isFromStorage: false,
+          isEditing: false,
+          defaultValue: null,
+          storageValue: null,
+          value: "b",
+          windowValue: "b",
+        },
+        {
+          path: "riri",
+          isFromStorage: false,
+          isEditing: false,
+          defaultValue: null,
+          storageValue: null,
+          value: "c",
+          windowValue: "c",
+        },
+        {
+          path: "loulou",
+          isFromStorage: false,
+          isEditing: false,
+          defaultValue: null,
+          storageValue: null,
+          value: "d",
+          windowValue: "d",
+        },
+        {
+          path: "foo",
+          isFromStorage: false,
+          isEditing: false,
+          defaultValue: null,
+          storageValue: null,
+          value: "from-window",
+          windowValue: "from-window",
+        },
+        {
+          path: "aBoolean",
+          isFromStorage: false,
+          isEditing: false,
+          defaultValue: null,
+          storageValue: null,
+          value: true,
+          windowValue: true,
+        },
+        {
+          path: "batman",
+          isFromStorage: false,
+          isEditing: false,
+          defaultValue: "from-default",
+          storageValue: null,
+          value: "from-default",
+          windowValue: null,
+        },
       ];
 
       expect(children.mock.calls[2][0].fields).toEqual(expectedFields);
