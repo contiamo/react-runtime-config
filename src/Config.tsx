@@ -1,11 +1,9 @@
+import pick from "lodash/pick";
 import React from "react";
 import { InjectedProps } from ".";
 
 export interface ConfigProps<T> {
-  children: (
-    getConfig: <K extends Extract<keyof T, string> = Extract<keyof T, string>>(path: K) => T[K],
-    setConfig: <K extends Extract<keyof T, string> = Extract<keyof T, string>>(path: K, value: T[K]) => void,
-  ) => React.ReactNode;
+  children: (options: Pick<InjectedProps<T>, "getConfig" | "getAllConfig" | "setConfig">) => React.ReactNode;
 }
 
 export class Config<T> extends React.Component<ConfigProps<T> & InjectedProps<T>> {
@@ -22,7 +20,8 @@ export class Config<T> extends React.Component<ConfigProps<T> & InjectedProps<T>
   }
 
   public render() {
-    return this.props.children(this.props.getConfig, this.props.setConfig);
+    const { children, ...props } = this.props;
+    return children(pick(props, ["getConfig", "getAllConfig", "setConfig"]));
   }
 
   /**

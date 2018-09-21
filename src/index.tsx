@@ -25,10 +25,7 @@ export interface ConfigOptions<TConfig> {
   localOverride?: boolean;
 }
 
-export interface InjectedProps<TConfig> {
-  localOverride: boolean;
-  namespace: string;
-  storage: Storage;
+export interface InjectedProps<TConfig> extends Required<ConfigOptions<TConfig>> {
   getConfig: <K extends Extract<keyof TConfig, string> = Extract<keyof TConfig, string>>(path: K) => TConfig[K];
   setConfig: <K extends Extract<keyof TConfig, string> = Extract<keyof TConfig, string>>(
     path: K,
@@ -44,6 +41,7 @@ export function createConfig<TConfig>(options: ConfigOptions<TConfig>) {
   const injected = {
     storage: window.localStorage,
     localOverride: true,
+    defaultConfig: {},
     ...options,
     namespace: namespace.slice(-1) === "." ? namespace : `${namespace}.`,
   };

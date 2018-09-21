@@ -67,7 +67,7 @@ describe("react-runtime-config", () => {
 
       render(<Config children={children} />);
 
-      expect(children.mock.calls[0][0]("foo")).toEqual("from-localstorage");
+      expect(children.mock.calls[0][0].getConfig("foo")).toEqual("from-localstorage");
     });
 
     it("should get the window value", () => {
@@ -76,7 +76,7 @@ describe("react-runtime-config", () => {
 
       render(<Config children={children} />);
 
-      expect(children.mock.calls[0][0]("foo")).toEqual("from-window");
+      expect(children.mock.calls[0][0].getConfig("foo")).toEqual("from-window");
     });
 
     it("should ignore trailing dot in the namespace", () => {
@@ -87,7 +87,7 @@ describe("react-runtime-config", () => {
 
       render(<Config children={children} />);
 
-      expect(children.mock.calls[0][0]("foo")).toEqual("from-localstorage");
+      expect(children.mock.calls[0][0].getConfig("foo")).toEqual("from-localstorage");
     });
 
     it("should rerender the component on localstorage update", () => {
@@ -98,13 +98,13 @@ describe("react-runtime-config", () => {
 
       render(<Config children={children} />);
 
-      expect(children.mock.calls[0][0]("foo")).toEqual("from-localstorage");
+      expect(children.mock.calls[0][0].getConfig("foo")).toEqual("from-localstorage");
 
       storage.setItem("test.foo", "from-localstorage-modified");
       window.dispatchEvent(new Event("storage"));
 
       expect(children.mock.calls.length).toEqual(2);
-      expect(children.mock.calls[0][0]("foo")).toEqual("from-localstorage-modified");
+      expect(children.mock.calls[0][0].getConfig("foo")).toEqual("from-localstorage-modified");
     });
 
     it("should not rerender the component on localstorage update if localOveride is disable", () => {
@@ -119,14 +119,14 @@ describe("react-runtime-config", () => {
       window.dispatchEvent(new Event("storage"));
 
       expect(children.mock.calls.length).toEqual(1);
-      expect(children.mock.calls[0][0]("foo")).toEqual("from-window");
+      expect(children.mock.calls[0][0].getConfig("foo")).toEqual("from-window");
     });
 
     it("should throw if the value is not set in window", () => {
       unset(window, "test.foo");
       const { Config } = createConfig<IConfig>({ namespace: "test", storage });
 
-      expect(() => render(<Config children={getConfig => getConfig("foo")} />)).toThrowError(
+      expect(() => render(<Config children={({ getConfig }) => getConfig("foo")} />)).toThrowError(
         "INVALID CONFIG: foo must be present inside config map, under window.test.",
       );
     });
@@ -139,7 +139,7 @@ describe("react-runtime-config", () => {
         set(window, "test.aBoolean", true);
         render(<Config children={children} />);
 
-        expect(children.mock.calls[0][0]("aBoolean")).toEqual(true);
+        expect(children.mock.calls[0][0].getConfig("aBoolean")).toEqual(true);
       });
 
       it("should return false from window config", () => {
@@ -149,7 +149,7 @@ describe("react-runtime-config", () => {
         set(window, "test.aBoolean", false);
         render(<Config children={children} />);
 
-        expect(children.mock.calls[0][0]("aBoolean")).toEqual(false);
+        expect(children.mock.calls[0][0].getConfig("aBoolean")).toEqual(false);
       });
 
       it("should return true from localstorage config", () => {
@@ -160,7 +160,7 @@ describe("react-runtime-config", () => {
         storage.setItem("test.foo", "true");
         render(<Config children={children} />);
 
-        expect(children.mock.calls[0][0]("foo")).toEqual(true);
+        expect(children.mock.calls[0][0].getConfig("foo")).toEqual(true);
       });
 
       it("should return false from localstorage config", () => {
@@ -171,7 +171,7 @@ describe("react-runtime-config", () => {
         storage.setItem("test.foo", "false");
         render(<Config children={children} />);
 
-        expect(children.mock.calls[0][0]("foo")).toEqual(false);
+        expect(children.mock.calls[0][0].getConfig("foo")).toEqual(false);
       });
     });
 
@@ -187,7 +187,7 @@ describe("react-runtime-config", () => {
 
         render(<Config children={children} />);
 
-        expect(children.mock.calls[0][0]("foo")).toEqual("from-default");
+        expect(children.mock.calls[0][0].getConfig("foo")).toEqual("from-default");
       });
 
       it("should return the window value if defined", () => {
@@ -200,7 +200,7 @@ describe("react-runtime-config", () => {
 
         render(<Config children={children} />);
 
-        expect(children.mock.calls[0][0]("foo")).toEqual("from-window");
+        expect(children.mock.calls[0][0].getConfig("foo")).toEqual("from-window");
       });
 
       it("should return the storage value if defined", () => {
@@ -214,7 +214,7 @@ describe("react-runtime-config", () => {
 
         render(<Config children={children} />);
 
-        expect(children.mock.calls[0][0]("foo")).toEqual("from-localstorage");
+        expect(children.mock.calls[0][0].getConfig("foo")).toEqual("from-localstorage");
       });
     });
 
@@ -222,7 +222,7 @@ describe("react-runtime-config", () => {
       const { Config } = createConfig<IConfig>({ namespace: "test", storage });
       render(
         <Config>
-          {(getConfig, setConfig) => {
+          {({ getConfig, setConfig }) => {
             const val: boolean = getConfig("aBoolean");
             const val2: string = getConfig("donald");
             setConfig("loulou", "plop");
@@ -262,13 +262,69 @@ describe("react-runtime-config", () => {
 
     it("should return all the config fields", () => {
       const expectedFields = [
-        { path: "picsou", storageValue: "$$$", value: "$$$", windowValue: "a" },
-        { path: "donald", storageValue: null, value: "b", windowValue: "b" },
-        { path: "riri", storageValue: null, value: "c", windowValue: "c" },
-        { path: "loulou", storageValue: null, value: "d", windowValue: "d" },
-        { path: "foo", storageValue: null, value: "from-window", windowValue: "from-window" },
-        { path: "aBoolean", storageValue: null, value: true, windowValue: true },
-        { path: "batman", storageValue: null, value: "from-default", windowValue: null },
+        {
+          path: "picsou",
+          isFromStorage: true,
+          isEditing: false,
+          defaultValue: null,
+          storageValue: "$$$",
+          value: "$$$",
+          windowValue: "a",
+        },
+        {
+          path: "donald",
+          isFromStorage: false,
+          isEditing: false,
+          defaultValue: null,
+          storageValue: null,
+          value: "b",
+          windowValue: "b",
+        },
+        {
+          path: "riri",
+          isFromStorage: false,
+          isEditing: false,
+          defaultValue: null,
+          storageValue: null,
+          value: "c",
+          windowValue: "c",
+        },
+        {
+          path: "loulou",
+          isFromStorage: false,
+          isEditing: false,
+          defaultValue: null,
+          storageValue: null,
+          value: "d",
+          windowValue: "d",
+        },
+        {
+          path: "foo",
+          isFromStorage: false,
+          isEditing: false,
+          defaultValue: null,
+          storageValue: null,
+          value: "from-window",
+          windowValue: "from-window",
+        },
+        {
+          path: "aBoolean",
+          isFromStorage: false,
+          isEditing: false,
+          defaultValue: null,
+          storageValue: null,
+          value: true,
+          windowValue: true,
+        },
+        {
+          path: "batman",
+          isFromStorage: false,
+          isEditing: false,
+          defaultValue: "from-default",
+          storageValue: null,
+          value: "from-default",
+          windowValue: null,
+        },
       ];
       expect(children.mock.calls[0][0].fields).toEqual(expectedFields);
     });
@@ -277,13 +333,69 @@ describe("react-runtime-config", () => {
       children.mock.calls[0][0].onFieldChange("picsou", "plop");
 
       const expectedFields = [
-        { path: "picsou", storageValue: "$$$", value: "plop", windowValue: "a" },
-        { path: "donald", storageValue: null, value: "b", windowValue: "b" },
-        { path: "riri", storageValue: null, value: "c", windowValue: "c" },
-        { path: "loulou", storageValue: null, value: "d", windowValue: "d" },
-        { path: "foo", storageValue: null, value: "from-window", windowValue: "from-window" },
-        { path: "aBoolean", storageValue: null, value: true, windowValue: true },
-        { path: "batman", storageValue: null, value: "from-default", windowValue: null },
+        {
+          path: "picsou",
+          isFromStorage: true,
+          isEditing: true,
+          defaultValue: null,
+          storageValue: "$$$",
+          value: "plop",
+          windowValue: "a",
+        },
+        {
+          path: "donald",
+          isFromStorage: false,
+          isEditing: false,
+          defaultValue: null,
+          storageValue: null,
+          value: "b",
+          windowValue: "b",
+        },
+        {
+          path: "riri",
+          isFromStorage: false,
+          isEditing: false,
+          defaultValue: null,
+          storageValue: null,
+          value: "c",
+          windowValue: "c",
+        },
+        {
+          path: "loulou",
+          isFromStorage: false,
+          isEditing: false,
+          defaultValue: null,
+          storageValue: null,
+          value: "d",
+          windowValue: "d",
+        },
+        {
+          path: "foo",
+          isFromStorage: false,
+          isEditing: false,
+          defaultValue: null,
+          storageValue: null,
+          value: "from-window",
+          windowValue: "from-window",
+        },
+        {
+          path: "aBoolean",
+          isFromStorage: false,
+          isEditing: false,
+          defaultValue: null,
+          storageValue: null,
+          value: true,
+          windowValue: true,
+        },
+        {
+          path: "batman",
+          isFromStorage: false,
+          isEditing: false,
+          defaultValue: "from-default",
+          storageValue: null,
+          value: "from-default",
+          windowValue: null,
+        },
       ];
 
       expect(children.mock.calls[1][0].fields).toEqual(expectedFields);
@@ -295,6 +407,15 @@ describe("react-runtime-config", () => {
       children.mock.calls[0][0].onFieldChange("picsou", "plop");
       children.mock.calls[1][0].submit();
 
+      expect(children.mock.calls[2][0].fields[0]).toEqual({
+        path: "picsou",
+        isFromStorage: true,
+        isEditing: false,
+        defaultValue: null,
+        storageValue: "plop",
+        value: "plop",
+        windowValue: "a",
+      });
       expect(storage.getItem("test.picsou")).toEqual("plop");
     });
 
@@ -303,13 +424,69 @@ describe("react-runtime-config", () => {
       children.mock.calls[1][0].reset();
 
       const expectedFields = [
-        { path: "picsou", storageValue: null, value: "a", windowValue: "a" },
-        { path: "donald", storageValue: null, value: "b", windowValue: "b" },
-        { path: "riri", storageValue: null, value: "c", windowValue: "c" },
-        { path: "loulou", storageValue: null, value: "d", windowValue: "d" },
-        { path: "foo", storageValue: null, value: "from-window", windowValue: "from-window" },
-        { path: "aBoolean", storageValue: null, value: true, windowValue: true },
-        { path: "batman", storageValue: null, value: "from-default", windowValue: null },
+        {
+          path: "picsou",
+          isFromStorage: false,
+          isEditing: false,
+          defaultValue: null,
+          storageValue: null,
+          value: "a",
+          windowValue: "a",
+        },
+        {
+          path: "donald",
+          isFromStorage: false,
+          isEditing: false,
+          defaultValue: null,
+          storageValue: null,
+          value: "b",
+          windowValue: "b",
+        },
+        {
+          path: "riri",
+          isFromStorage: false,
+          isEditing: false,
+          defaultValue: null,
+          storageValue: null,
+          value: "c",
+          windowValue: "c",
+        },
+        {
+          path: "loulou",
+          isFromStorage: false,
+          isEditing: false,
+          defaultValue: null,
+          storageValue: null,
+          value: "d",
+          windowValue: "d",
+        },
+        {
+          path: "foo",
+          isFromStorage: false,
+          isEditing: false,
+          defaultValue: null,
+          storageValue: null,
+          value: "from-window",
+          windowValue: "from-window",
+        },
+        {
+          path: "aBoolean",
+          isFromStorage: false,
+          isEditing: false,
+          defaultValue: null,
+          storageValue: null,
+          value: true,
+          windowValue: true,
+        },
+        {
+          path: "batman",
+          isFromStorage: false,
+          isEditing: false,
+          defaultValue: "from-default",
+          storageValue: null,
+          value: "from-default",
+          windowValue: null,
+        },
       ];
 
       expect(children.mock.calls[2][0].fields).toEqual(expectedFields);
@@ -322,13 +499,69 @@ describe("react-runtime-config", () => {
       children.mock.calls[2][0].submit(); // This don't call another loop since all user values are undefined
 
       const expectedFields = [
-        { path: "picsou", storageValue: null, value: "a", windowValue: "a" },
-        { path: "donald", storageValue: null, value: "b", windowValue: "b" },
-        { path: "riri", storageValue: null, value: "c", windowValue: "c" },
-        { path: "loulou", storageValue: null, value: "d", windowValue: "d" },
-        { path: "foo", storageValue: null, value: "from-window", windowValue: "from-window" },
-        { path: "aBoolean", storageValue: null, value: true, windowValue: true },
-        { path: "batman", storageValue: null, value: "from-default", windowValue: null },
+        {
+          path: "picsou",
+          isFromStorage: false,
+          isEditing: false,
+          defaultValue: null,
+          storageValue: null,
+          value: "a",
+          windowValue: "a",
+        },
+        {
+          path: "donald",
+          isFromStorage: false,
+          isEditing: false,
+          defaultValue: null,
+          storageValue: null,
+          value: "b",
+          windowValue: "b",
+        },
+        {
+          path: "riri",
+          isFromStorage: false,
+          isEditing: false,
+          defaultValue: null,
+          storageValue: null,
+          value: "c",
+          windowValue: "c",
+        },
+        {
+          path: "loulou",
+          isFromStorage: false,
+          isEditing: false,
+          defaultValue: null,
+          storageValue: null,
+          value: "d",
+          windowValue: "d",
+        },
+        {
+          path: "foo",
+          isFromStorage: false,
+          isEditing: false,
+          defaultValue: null,
+          storageValue: null,
+          value: "from-window",
+          windowValue: "from-window",
+        },
+        {
+          path: "aBoolean",
+          isFromStorage: false,
+          isEditing: false,
+          defaultValue: null,
+          storageValue: null,
+          value: true,
+          windowValue: true,
+        },
+        {
+          path: "batman",
+          isFromStorage: false,
+          isEditing: false,
+          defaultValue: "from-default",
+          storageValue: null,
+          value: "from-default",
+          windowValue: null,
+        },
       ];
 
       expect(children.mock.calls[2][0].fields).toEqual(expectedFields);

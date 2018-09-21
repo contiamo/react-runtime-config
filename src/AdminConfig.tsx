@@ -5,9 +5,12 @@ import { InjectedProps } from ".";
 
 export type Field<T, K extends keyof T = Extract<keyof T, string>> = Array<{
   path: K;
+  defaultValue: T[K] | null;
   windowValue: any;
   storageValue: string | boolean | null;
   value: T[K];
+  isFromStorage: boolean;
+  isEditing: boolean;
 }>;
 
 export interface AdminConfigProps<T> {
@@ -51,12 +54,19 @@ export class AdminConfig<T> extends React.Component<AdminConfigProps<T> & Inject
   }
 
   public render() {
-    const fields = this.getConfigKeys().map(path => ({
-      path,
-      windowValue: this.props.getWindowValue(path),
-      storageValue: this.props.getStorageValue(path),
-      value: get(this.state, path, this.props.getConfig(path)),
-    }));
+    const fields = this.getConfigKeys()
+      .map(path => ({
+        path,
+        defaultValue: get(this.props.defaultConfig, path, null) as T[typeof path] | null,
+        windowValue: this.props.getWindowValue(path),
+        storageValue: this.props.getStorageValue(path),
+        value: get(this.state, path, this.props.getConfig(path)),
+      }))
+      .map(field => ({
+        ...field,
+        isFromStorage: field.storageValue !== null,
+        isEditing: field.value !== (field.storageValue || field.defaultValue || field.windowValue),
+      }));
 
     return this.props.children({
       fields,
