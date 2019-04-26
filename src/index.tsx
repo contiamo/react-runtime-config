@@ -5,6 +5,8 @@ import React from "react";
 import AdminConfigBase, { AdminConfigProps } from "./AdminConfig";
 import ConfigBase, { ConfigProps } from "./Config";
 
+export { ConfigProps, AdminConfigProps };
+
 export interface ConfigOptions<TConfig> {
   namespace: string;
   /**
@@ -99,7 +101,7 @@ export function createConfig<TConfig>(options: ConfigOptions<TConfig>) {
    */
   function getAllConfig(): TConfig {
     // `slice(0, -1)`is for removing the trailing point
-    const windowKeys = Object.keys(get(window, injected.namespace.slice(0, -1))) as any;
+    const windowKeys = Object.keys(get(window, injected.namespace.slice(0, -1), {})) as any;
     const defaultKeys = Object.keys(options.defaultConfig || {});
 
     return uniq([...windowKeys, ...defaultKeys]).reduce((mem, key) => ({ ...mem, [key]: getConfig(key) }), {});
