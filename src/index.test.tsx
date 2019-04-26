@@ -568,4 +568,25 @@ describe("react-runtime-config", () => {
       expect(children.mock.calls.length).toBe(3);
     });
   });
+
+  describe("getAllConfig", () => {
+    it("should return all the config available", () => {
+      const { getAllConfig } = createConfig<IConfig>({ namespace: "test", storage });
+
+      expect(getAllConfig()).toEqual({
+        aBoolean: true,
+        donald: "b",
+        foo: "from-window",
+        loulou: "d",
+        picsou: "a",
+        riri: "c",
+      });
+    });
+
+    it("should return an empty config if window is undefined", () => {
+      const { getAllConfig } = createConfig<IConfig>({ namespace: "unknown", storage });
+
+      expect(getAllConfig()).toEqual({});
+    });
+  });
 });
