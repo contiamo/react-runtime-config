@@ -163,5 +163,4 @@ lib
 
 # Files managed by operational-scripts
 tslint.json
-tsconfig.json
 .prettierrc
