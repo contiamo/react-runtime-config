@@ -115,7 +115,7 @@ You can now use the created components everywhere in your application.
 import react from "React";
 import Config from "./Config";
 
-const MyComponent = () => <Config>{getConfig => <h1 style={{ color: getConfig("color") }}>My title</h1>}</Config>;
+const MyComponent = () => <Config>{({ getConfig }) => <h1 style={{ color: getConfig("color") }}>My title</h1>}</Config>;
 ```
 
 The title will have a different color regarding our current environment.
