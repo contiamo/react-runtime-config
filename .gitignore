@@ -160,7 +160,3 @@ $RECYCLE.BIN/
 # Build files
 dist
 lib
-
-# Files managed by operational-scripts
-tslint.json
-.prettierrc

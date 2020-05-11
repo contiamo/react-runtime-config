@@ -88,6 +88,7 @@ interface MandatoryConfig {
 // All optional config values.
 const defaultConfig = {
   color: "pink",
+  myFeatureFlag: false,
 };
 
 export type ConfigType = MandatoryConfig & typeof defaultConfig;
@@ -101,7 +102,16 @@ export type ConfigType = MandatoryConfig & typeof defaultConfig;
  * down.
  */
 
-export const { Config, AdminConfig } = createConfig<ConfigType>({ namespace: "MY_APP_CONFIG", defaultConfig });
+export const { Config, AdminConfig } = createConfig<ConfigType>({
+  namespace: "MY_APP_CONFIG",
+  defaultConfig,
+  // Types are totally optionals since they are just metadata for the AdminConfig
+  types: {
+    myFeatureFlag: "boolean",
+    color: ["pink", "red", "blue"], // Enum type
+    backendUrl: "string",
+  },
+});
 
 export default Config;
 ```
@@ -147,6 +157,10 @@ interface ConfigOptions {
    * @default true
    */
   localOverride?: boolean;
+  /**
+   * Runtime types mapping (metadata for AdminConfig)
+   */
+  types?: { [key in keyof TConfig]?: RuntimeType };
 }
 ```
 
@@ -158,20 +172,36 @@ To allow easy management of your configuration, we provide a smart component cal
 
 ```ts
 // pages/ConfigurationPage.tsx
-import { Page, Card, Input, Button } from "@operational/components";
+import { Page, Card, Input, Button, Checkbox } from "@operational/components";
 import { AdminConfig } from "./components/Config";
 
 export default () => (
   <Page title="Configuration">
     <Card title="Configuration">
       <AdminConfig>
-        {({ fields, onFieldChange, submit, reset }) =>
-          fields.map(field => (
-            <Input value={field.value} label={field.path} onChange={val => field.onChange(field.path, val)} />
-          ))
-        }
-        <Button onClick={submit}>Update config</Button>
-        <Button onClick={reset}>Reset config</Button>
+        {({ fields, onFieldChange, submit, reset }) => (
+          <>
+            {fields.map(field =>
+              field.type === "boolean" ? (
+                <Checkbox
+                  key={field.path}
+                  value={field.value}
+                  label={field.path}
+                  onChange={val => onFieldChange(field.path, val)}
+                />
+              ) : (
+                <Input
+                  key={field.path}
+                  value={field.value}
+                  label={field.path}
+                  onChange={val => onFieldChange(field.path, val)}
+                />
+              ),
+            )}
+            <Button onClick={submit}>Update config</Button>
+            <Button onClick={reset}>Reset config</Button>
+          </>
+        )}
       </AdminConfig>
     </Card>
   </Page>

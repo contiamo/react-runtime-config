@@ -1,7 +1,7 @@
 import get from "lodash/get";
 import React from "react";
 
-import { InjectedProps } from ".";
+import { InjectedProps, RuntimeType } from ".";
 
 export type Field<T, K extends keyof T = Extract<keyof T, string>> = Array<{
   path: K;
@@ -11,29 +11,28 @@ export type Field<T, K extends keyof T = Extract<keyof T, string>> = Array<{
   value: T[K];
   isFromStorage: boolean;
   isEditing: boolean;
+  type: RuntimeType;
 }>;
 
 export interface AdminConfigProps<T> {
-  children: (
-    options: {
-      /**
-       * List of all config values
-       */
-      fields: Field<T>;
-      /**
-       * Handler to update `fields.value`
-       */
-      onFieldChange: <L extends keyof T = Extract<keyof T, string>>(path: L, value: T[L]) => void;
-      /**
-       * Set all `value` to `storageValue`
-       */
-      submit: () => void;
-      /**
-       * Reset the store
-       */
-      reset: () => void;
-    },
-  ) => React.ReactNode;
+  children: (options: {
+    /**
+     * List of all config values
+     */
+    fields: Field<T>;
+    /**
+     * Handler to update `fields.value`
+     */
+    onFieldChange: <L extends keyof T = Extract<keyof T, string>>(path: L, value: T[L]) => void;
+    /**
+     * Set all `value` to `storageValue`
+     */
+    submit: () => void;
+    /**
+     * Reset the store
+     */
+    reset: () => void;
+  }) => React.ReactNode;
 }
 
 export interface AdminConfigState {
@@ -61,6 +60,7 @@ export class AdminConfig<T> extends React.Component<AdminConfigProps<T> & Inject
         windowValue: this.props.getWindowValue(path),
         storageValue: this.props.getStorageValue(path),
         value: get(this.state, path, this.props.getConfig(path)),
+        type: get(this.props.types, path, "string") as RuntimeType,
       }))
       .map(field => ({
         ...field,

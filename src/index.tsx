@@ -7,6 +7,8 @@ import ConfigBase, { ConfigProps } from "./Config";
 
 export { ConfigProps, AdminConfigProps };
 
+export type RuntimeType = "string" | "boolean" | "number" | string[];
+
 export interface ConfigOptions<TConfig> {
   namespace: string;
   /**
@@ -25,6 +27,10 @@ export interface ConfigOptions<TConfig> {
    * @default true
    */
   localOverride?: boolean;
+  /**
+   * Runtime types mapping (metadata for AdminConfig)
+   */
+  types?: { [key in keyof TConfig]?: RuntimeType };
 }
 
 export interface InjectedProps<TConfig> extends Required<ConfigOptions<TConfig>> {
@@ -44,6 +50,7 @@ export function createConfig<TConfig>(options: ConfigOptions<TConfig>) {
     storage: window.localStorage,
     localOverride: true,
     defaultConfig: {},
+    types: {},
     ...options,
     namespace: namespace.slice(-1) === "." ? namespace : `${namespace}.`,
   };
