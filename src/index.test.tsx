@@ -252,7 +252,15 @@ describe("react-runtime-config", () => {
     let children: jest.Mock<React.ReactNode, Arguments<AdminConfigProps<IConfig & typeof defaultConfig>["children"]>>;
 
     beforeEach(() => {
-      config = createConfig<IConfig & typeof defaultConfig>({ namespace: "test", storage, defaultConfig });
+      config = createConfig<IConfig & typeof defaultConfig>({
+        namespace: "test",
+        storage,
+        defaultConfig,
+        types: {
+          aBoolean: "boolean",
+          riri: ["the best", "not the best"],
+        },
+      });
       children = jest.fn<React.ReactNode, Arguments<AdminConfigProps<IConfig & typeof defaultConfig>["children"]>>(
         () => <div />,
       );
@@ -275,6 +283,7 @@ describe("react-runtime-config", () => {
           storageValue: "$$$",
           value: "$$$",
           windowValue: "a",
+          type: "string",
         },
         {
           path: "donald",
@@ -284,6 +293,7 @@ describe("react-runtime-config", () => {
           storageValue: null,
           value: "b",
           windowValue: "b",
+          type: "string",
         },
         {
           path: "riri",
@@ -293,6 +303,7 @@ describe("react-runtime-config", () => {
           storageValue: null,
           value: "c",
           windowValue: "c",
+          type: ["the best", "not the best"],
         },
         {
           path: "loulou",
@@ -302,6 +313,7 @@ describe("react-runtime-config", () => {
           storageValue: null,
           value: "d",
           windowValue: "d",
+          type: "string",
         },
         {
           path: "foo",
@@ -311,6 +323,7 @@ describe("react-runtime-config", () => {
           storageValue: null,
           value: "from-window",
           windowValue: "from-window",
+          type: "string",
         },
         {
           path: "aBoolean",
@@ -320,6 +333,7 @@ describe("react-runtime-config", () => {
           storageValue: null,
           value: true,
           windowValue: true,
+          type: "boolean",
         },
         {
           path: "batman",
@@ -329,6 +343,7 @@ describe("react-runtime-config", () => {
           storageValue: null,
           value: "from-default",
           windowValue: null,
+          type: "string",
         },
       ];
       expect(children.mock.calls[0][0].fields).toEqual(expectedFields);
@@ -346,6 +361,7 @@ describe("react-runtime-config", () => {
           storageValue: "$$$",
           value: "plop",
           windowValue: "a",
+          type: "string",
         },
         {
           path: "donald",
@@ -355,6 +371,7 @@ describe("react-runtime-config", () => {
           storageValue: null,
           value: "b",
           windowValue: "b",
+          type: "string",
         },
         {
           path: "riri",
@@ -364,6 +381,7 @@ describe("react-runtime-config", () => {
           storageValue: null,
           value: "c",
           windowValue: "c",
+          type: ["the best", "not the best"],
         },
         {
           path: "loulou",
@@ -373,6 +391,7 @@ describe("react-runtime-config", () => {
           storageValue: null,
           value: "d",
           windowValue: "d",
+          type: "string",
         },
         {
           path: "foo",
@@ -382,6 +401,7 @@ describe("react-runtime-config", () => {
           storageValue: null,
           value: "from-window",
           windowValue: "from-window",
+          type: "string",
         },
         {
           path: "aBoolean",
@@ -391,6 +411,7 @@ describe("react-runtime-config", () => {
           storageValue: null,
           value: true,
           windowValue: true,
+          type: "boolean",
         },
         {
           path: "batman",
@@ -400,6 +421,7 @@ describe("react-runtime-config", () => {
           storageValue: null,
           value: "from-default",
           windowValue: null,
+          type: "string",
         },
       ];
 
@@ -420,6 +442,7 @@ describe("react-runtime-config", () => {
         storageValue: "plop",
         value: "plop",
         windowValue: "a",
+        type: "string",
       });
       expect(storage.getItem("test.picsou")).toEqual("plop");
     });
@@ -437,6 +460,7 @@ describe("react-runtime-config", () => {
           storageValue: null,
           value: "a",
           windowValue: "a",
+          type: "string",
         },
         {
           path: "donald",
@@ -446,6 +470,7 @@ describe("react-runtime-config", () => {
           storageValue: null,
           value: "b",
           windowValue: "b",
+          type: "string",
         },
         {
           path: "riri",
@@ -455,6 +480,7 @@ describe("react-runtime-config", () => {
           storageValue: null,
           value: "c",
           windowValue: "c",
+          type: ["the best", "not the best"],
         },
         {
           path: "loulou",
@@ -464,6 +490,7 @@ describe("react-runtime-config", () => {
           storageValue: null,
           value: "d",
           windowValue: "d",
+          type: "string",
         },
         {
           path: "foo",
@@ -473,6 +500,7 @@ describe("react-runtime-config", () => {
           storageValue: null,
           value: "from-window",
           windowValue: "from-window",
+          type: "string",
         },
         {
           path: "aBoolean",
@@ -482,6 +510,7 @@ describe("react-runtime-config", () => {
           storageValue: null,
           value: true,
           windowValue: true,
+          type: "boolean",
         },
         {
           path: "batman",
@@ -491,6 +520,7 @@ describe("react-runtime-config", () => {
           storageValue: null,
           value: "from-default",
           windowValue: null,
+          type: "string",
         },
       ];
 
@@ -512,6 +542,7 @@ describe("react-runtime-config", () => {
           storageValue: null,
           value: "a",
           windowValue: "a",
+          type: "string",
         },
         {
           path: "donald",
@@ -521,6 +552,7 @@ describe("react-runtime-config", () => {
           storageValue: null,
           value: "b",
           windowValue: "b",
+          type: "string",
         },
         {
           path: "riri",
@@ -530,6 +562,7 @@ describe("react-runtime-config", () => {
           storageValue: null,
           value: "c",
           windowValue: "c",
+          type: ["the best", "not the best"],
         },
         {
           path: "loulou",
@@ -539,6 +572,7 @@ describe("react-runtime-config", () => {
           storageValue: null,
           value: "d",
           windowValue: "d",
+          type: "string",
         },
         {
           path: "foo",
@@ -548,6 +582,7 @@ describe("react-runtime-config", () => {
           storageValue: null,
           value: "from-window",
           windowValue: "from-window",
+          type: "string",
         },
         {
           path: "aBoolean",
@@ -557,6 +592,7 @@ describe("react-runtime-config", () => {
           storageValue: null,
           value: true,
           windowValue: true,
+          type: "boolean",
         },
         {
           path: "batman",
@@ -566,6 +602,7 @@ describe("react-runtime-config", () => {
           storageValue: null,
           value: "from-default",
           windowValue: null,
+          type: "string",
         },
       ];
 
