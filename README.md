@@ -181,20 +181,20 @@ export default () => (
       <AdminConfig>
         {({ fields, onFieldChange, submit, reset }) => (
           <>
-            {fields.map((field) =>
+            {fields.map(field =>
               field.type === "boolean" ? (
                 <Checkbox
                   key={field.path}
                   value={field.value}
                   label={field.path}
-                  onChange={(val) => onFieldChange(field.path, val)}
+                  onChange={val => onFieldChange(field.path, val)}
                 />
               ) : (
                 <Input
                   key={field.path}
                   value={field.value}
                   label={field.path}
-                  onChange={(val) => onFieldChange(field.path, val)}
+                  onChange={val => onFieldChange(field.path, val)}
                 />
               ),
             )}

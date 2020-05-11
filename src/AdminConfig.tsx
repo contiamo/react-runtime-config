@@ -54,7 +54,7 @@ export class AdminConfig<T> extends React.Component<AdminConfigProps<T> & Inject
 
   public render() {
     const fields = this.getConfigKeys()
-      .map((path) => ({
+      .map(path => ({
         path,
         defaultValue: get(this.props.defaultConfig, path, null) as T[typeof path] | null,
         windowValue: this.props.getWindowValue(path),
@@ -62,7 +62,7 @@ export class AdminConfig<T> extends React.Component<AdminConfigProps<T> & Inject
         value: get(this.state, path, this.props.getConfig(path)),
         type: get(this.props.types, path, "string") as RuntimeType,
       }))
-      .map((field) => ({
+      .map(field => ({
         ...field,
         isFromStorage: field.storageValue !== null,
         isEditing: field.value !== (field.storageValue || field.defaultValue || field.windowValue),
@@ -99,7 +99,7 @@ export class AdminConfig<T> extends React.Component<AdminConfigProps<T> & Inject
    */
   private onReset = () => {
     // Reset storage
-    this.getConfigKeys().forEach((path) => {
+    this.getConfigKeys().forEach(path => {
       this.props.storage.removeItem(`${this.props.namespace}${path}`);
     });
 
