@@ -32,6 +32,10 @@ export interface AdminConfigProps<T> {
      * Reset the store
      */
     reset: () => void;
+    /**
+     * Proxy of setConfig
+     */
+    setConfig: InjectedProps<T>["setConfig"];
   }) => React.ReactNode;
 }
 
@@ -73,6 +77,7 @@ export class AdminConfig<T> extends React.Component<AdminConfigProps<T> & Inject
       onFieldChange: this.onFieldChange,
       submit: this.onSubmit,
       reset: this.onReset,
+      setConfig: this.props.setConfig,
     });
   }
 
