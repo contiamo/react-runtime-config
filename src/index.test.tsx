@@ -2,13 +2,15 @@ import get from "lodash/get";
 import set from "lodash/set";
 import unset from "lodash/unset";
 import React from "react";
-import { cleanup, render } from "react-testing-library";
+import { cleanup, render, act } from "@testing-library/react";
 import { Mock } from "ts-mockery";
 
 import createConfig from "./";
 import { ConfigProps } from "./Config";
 import { AdminConfigProps } from "./AdminConfig";
 import { Arguments } from "./utils";
+import "@testing-library/jest-dom/extend-expect";
+// import { renderHook } from "@testing-library/react-hooks";
 
 // Localstorage mock
 let store = {};
@@ -110,7 +112,32 @@ describe("react-runtime-config", () => {
       expect(children.mock.calls[0][0].getConfig("foo")).toEqual("from-localstorage-modified");
     });
 
-    it("should not rerender the component on localstorage update if localOveride is disable", () => {
+    it("should rerender the component on localstorage update (hook)", async () => {
+      const { useConfig } = createConfig<IConfig>({ namespace: "test", storage });
+      let renderCount = 0;
+      const App = () => {
+        const {getConfig} = useConfig();
+        renderCount++;
+        return <div data-testid="foo">{getConfig("foo")}</div>
+      }
+
+      storage.setItem("test.foo", "from-localstorage");
+
+      const { findByTestId } = render(<App />);
+      const value = await findByTestId("foo")
+
+      expect(value).toHaveTextContent("from-localstorage")
+      
+      act(() => {
+        storage.setItem("test.foo", "from-localstorage-modified");
+        window.dispatchEvent(new Event("storage"));
+      })
+
+      expect(value).toHaveTextContent("from-localstorage-modified");
+      expect(renderCount).toBe(2);
+    });
+
+    it("should not rerender the component on localstorage update if localOverride is disable", () => {
       const { Config } = createConfig<IConfig>({ namespace: "test", storage, localOverride: false });
       const children = jest.fn<React.ReactNode, Arguments<ConfigProps<IConfig>["children"]>>(() => <div />);
 
@@ -124,6 +151,30 @@ describe("react-runtime-config", () => {
       expect(children.mock.calls.length).toEqual(1);
       expect(children.mock.calls[0][0].getConfig("foo")).toEqual("from-window");
     });
+    
+    it("should not rerender the component on localstorage update if localOverride is disable (hook)", async () => {
+      const { useConfig } = createConfig<IConfig>({ namespace: "test", storage, localOverride: false });
+      let renderCount = 0;
+      const App = () => {
+        const {getConfig} = useConfig();
+        renderCount++;
+        return <div data-testid="foo">{getConfig("foo")}</div>
+      }
+
+      storage.setItem("test.foo", "from-localstorage");
+
+      const { findByTestId } = render(<App />);
+      const value = await findByTestId("foo")
+
+      act(() => {
+        storage.setItem("test.foo", "from-localstorage-modified");
+        window.dispatchEvent(new Event("storage"));
+      })
+
+      expect(value).toHaveTextContent("from-window");
+      expect(renderCount).toBe(1);
+    });
+    
 
     it("should throw if the value is not set in window", () => {
       unset(window, "test.foo");

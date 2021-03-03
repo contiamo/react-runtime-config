@@ -4,6 +4,7 @@ import React from "react";
 
 import AdminConfigBase, { AdminConfigProps } from "./AdminConfig";
 import ConfigBase, { ConfigProps } from "./Config";
+import useConfigBase from "./useConfig";
 
 export { ConfigProps, AdminConfigProps };
 
@@ -141,6 +142,14 @@ export function createConfig<TConfig>(options: ConfigOptions<TConfig>) {
         />
       );
     },
+    useConfig: useConfigBase<TConfig>({
+      getConfig,
+      getAllConfig,
+      getStorageValue,
+      getWindowValue,
+      setConfig,
+      ...injected,
+    }),
     getConfig,
     setConfig,
     getAllConfig,
