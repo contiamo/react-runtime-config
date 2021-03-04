@@ -8,7 +8,6 @@ import { Mock } from "ts-mockery";
 import createConfig from "./";
 import { ConfigProps } from "./Config";
 import { AdminConfigProps } from "./AdminConfig";
-import { Arguments } from "./utils";
 import "@testing-library/jest-dom/extend-expect";
 // import { renderHook } from "@testing-library/react-hooks";
 
@@ -17,9 +16,18 @@ let store = {};
 
 const storage = Mock.of<Storage>({
   getItem: (path: string) => get(store, path, null),
-  setItem: (path: string, value: string) => set(store, path, value),
-  removeItem: (path: string) => unset(store, path),
-  clear: () => (store = {}),
+  setItem: (path: string, value: string) => {
+    set(store, path, value);
+    window.dispatchEvent(new Event("storage"));
+  },
+  removeItem: (path: string) => {
+    unset(store, path);
+    window.dispatchEvent(new Event("storage"));
+  },
+  clear: () => {
+    store = {};
+    window.dispatchEvent(new Event("storage"));
+  },
 });
 
 interface IConfig {
@@ -66,7 +74,7 @@ describe("react-runtime-config", () => {
   describe("Config", () => {
     it("should get the localhost value", () => {
       const { Config } = createConfig<IConfig>({ namespace: "test", storage });
-      const children = jest.fn<React.ReactNode, Arguments<ConfigProps<IConfig>["children"]>>(() => <div />);
+      const children = jest.fn<React.ReactNode, Parameters<ConfigProps<IConfig>["children"]>>(() => <div />);
 
       storage.setItem("test.foo", "from-localstorage");
 
@@ -77,7 +85,7 @@ describe("react-runtime-config", () => {
 
     it("should get the window value", () => {
       const { Config } = createConfig<IConfig>({ namespace: "test", storage });
-      const children = jest.fn<React.ReactNode, Arguments<ConfigProps<IConfig>["children"]>>(() => <div />);
+      const children = jest.fn<React.ReactNode, Parameters<ConfigProps<IConfig>["children"]>>(() => <div />);
 
       render(<Config children={children} />);
 
@@ -86,7 +94,7 @@ describe("react-runtime-config", () => {
 
     it("should ignore trailing dot in the namespace", () => {
       const { Config } = createConfig<IConfig>({ namespace: "test.", storage });
-      const children = jest.fn<React.ReactNode, Arguments<ConfigProps<IConfig>["children"]>>(() => <div />);
+      const children = jest.fn<React.ReactNode, Parameters<ConfigProps<IConfig>["children"]>>(() => <div />);
 
       storage.setItem("test.foo", "from-localstorage");
 
@@ -97,7 +105,7 @@ describe("react-runtime-config", () => {
 
     it("should rerender the component on localstorage update", () => {
       const { Config } = createConfig<IConfig>({ namespace: "test", storage });
-      const children = jest.fn<React.ReactNode, Arguments<ConfigProps<IConfig>["children"]>>(() => <div />);
+      const children = jest.fn<React.ReactNode, Parameters<ConfigProps<IConfig>["children"]>>(() => <div />);
 
       storage.setItem("test.foo", "from-localstorage");
 
@@ -106,7 +114,6 @@ describe("react-runtime-config", () => {
       expect(children.mock.calls[0][0].getConfig("foo")).toEqual("from-localstorage");
 
       storage.setItem("test.foo", "from-localstorage-modified");
-      window.dispatchEvent(new Event("storage"));
 
       expect(children.mock.calls.length).toEqual(2);
       expect(children.mock.calls[0][0].getConfig("foo")).toEqual("from-localstorage-modified");
@@ -116,22 +123,21 @@ describe("react-runtime-config", () => {
       const { useConfig } = createConfig<IConfig>({ namespace: "test", storage });
       let renderCount = 0;
       const App = () => {
-        const {getConfig} = useConfig();
+        const { getConfig } = useConfig();
         renderCount++;
-        return <div data-testid="foo">{getConfig("foo")}</div>
-      }
+        return <div data-testid="foo">{getConfig("foo")}</div>;
+      };
 
       storage.setItem("test.foo", "from-localstorage");
 
       const { findByTestId } = render(<App />);
-      const value = await findByTestId("foo")
+      const value = await findByTestId("foo");
 
-      expect(value).toHaveTextContent("from-localstorage")
-      
+      expect(value).toHaveTextContent("from-localstorage");
+
       act(() => {
         storage.setItem("test.foo", "from-localstorage-modified");
-        window.dispatchEvent(new Event("storage"));
-      })
+      });
 
       expect(value).toHaveTextContent("from-localstorage-modified");
       expect(renderCount).toBe(2);
@@ -139,42 +145,39 @@ describe("react-runtime-config", () => {
 
     it("should not rerender the component on localstorage update if localOverride is disable", () => {
       const { Config } = createConfig<IConfig>({ namespace: "test", storage, localOverride: false });
-      const children = jest.fn<React.ReactNode, Arguments<ConfigProps<IConfig>["children"]>>(() => <div />);
+      const children = jest.fn<React.ReactNode, Parameters<ConfigProps<IConfig>["children"]>>(() => <div />);
 
       storage.setItem("test.foo", "from-localstorage");
 
       render(<Config children={children} />);
 
       storage.setItem("test.foo", "from-localstorage-modified");
-      window.dispatchEvent(new Event("storage"));
 
       expect(children.mock.calls.length).toEqual(1);
       expect(children.mock.calls[0][0].getConfig("foo")).toEqual("from-window");
     });
-    
+
     it("should not rerender the component on localstorage update if localOverride is disable (hook)", async () => {
       const { useConfig } = createConfig<IConfig>({ namespace: "test", storage, localOverride: false });
       let renderCount = 0;
       const App = () => {
-        const {getConfig} = useConfig();
+        const { getConfig } = useConfig();
         renderCount++;
-        return <div data-testid="foo">{getConfig("foo")}</div>
-      }
+        return <div data-testid="foo">{getConfig("foo")}</div>;
+      };
 
       storage.setItem("test.foo", "from-localstorage");
 
       const { findByTestId } = render(<App />);
-      const value = await findByTestId("foo")
+      const value = await findByTestId("foo");
 
       act(() => {
         storage.setItem("test.foo", "from-localstorage-modified");
-        window.dispatchEvent(new Event("storage"));
-      })
+      });
 
       expect(value).toHaveTextContent("from-window");
       expect(renderCount).toBe(1);
     });
-    
 
     it("should throw if the value is not set in window", () => {
       unset(window, "test.foo");
@@ -188,7 +191,7 @@ describe("react-runtime-config", () => {
     describe("boolean values", () => {
       it("should return true from window config", () => {
         const { Config } = createConfig<IConfig>({ namespace: "test", storage });
-        const children = jest.fn<React.ReactNode, Arguments<ConfigProps<IConfig>["children"]>>(() => <div />);
+        const children = jest.fn<React.ReactNode, Parameters<ConfigProps<IConfig>["children"]>>(() => <div />);
 
         set(window, "test.aBoolean", true);
         render(<Config children={children} />);
@@ -198,7 +201,7 @@ describe("react-runtime-config", () => {
 
       it("should return false from window config", () => {
         const { Config } = createConfig<IConfig>({ namespace: "test", storage });
-        const children = jest.fn<React.ReactNode, Arguments<ConfigProps<IConfig>["children"]>>(() => <div />);
+        const children = jest.fn<React.ReactNode, Parameters<ConfigProps<IConfig>["children"]>>(() => <div />);
 
         set(window, "test.aBoolean", false);
         render(<Config children={children} />);
@@ -208,7 +211,7 @@ describe("react-runtime-config", () => {
 
       it("should return true from localstorage config", () => {
         const { Config } = createConfig<IConfig>({ namespace: "test", storage });
-        const children = jest.fn<React.ReactNode, Arguments<ConfigProps<IConfig>["children"]>>(() => <div />);
+        const children = jest.fn<React.ReactNode, Parameters<ConfigProps<IConfig>["children"]>>(() => <div />);
 
         set(window, "test.foo", false);
         storage.setItem("test.foo", "true");
@@ -219,7 +222,7 @@ describe("react-runtime-config", () => {
 
       it("should return false from localstorage config", () => {
         const { Config } = createConfig<IConfig>({ namespace: "test", storage });
-        const children = jest.fn<React.ReactNode, Arguments<ConfigProps<IConfig>["children"]>>(() => <div />);
+        const children = jest.fn<React.ReactNode, Parameters<ConfigProps<IConfig>["children"]>>(() => <div />);
 
         set(window, "test.foo", true);
         storage.setItem("test.foo", "false");
@@ -237,7 +240,7 @@ describe("react-runtime-config", () => {
           storage,
           defaultConfig: { foo: "from-default" },
         });
-        const children = jest.fn<React.ReactNode, Arguments<ConfigProps<IConfig>["children"]>>(() => <div />);
+        const children = jest.fn<React.ReactNode, Parameters<ConfigProps<IConfig>["children"]>>(() => <div />);
 
         render(<Config children={children} />);
 
@@ -250,7 +253,7 @@ describe("react-runtime-config", () => {
           storage,
           defaultConfig: { foo: "from-default" },
         });
-        const children = jest.fn<React.ReactNode, Arguments<ConfigProps<IConfig>["children"]>>(() => <div />);
+        const children = jest.fn<React.ReactNode, Parameters<ConfigProps<IConfig>["children"]>>(() => <div />);
 
         render(<Config children={children} />);
 
@@ -263,7 +266,7 @@ describe("react-runtime-config", () => {
           storage,
           defaultConfig: { foo: "from-default" },
         });
-        const children = jest.fn<React.ReactNode, Arguments<ConfigProps<IConfig>["children"]>>(() => <div />);
+        const children = jest.fn<React.ReactNode, Parameters<ConfigProps<IConfig>["children"]>>(() => <div />);
         storage.setItem("test.foo", "from-localstorage");
 
         render(<Config children={children} />);
@@ -300,7 +303,7 @@ describe("react-runtime-config", () => {
       batman: "from-default",
     };
     let config = createConfig<IConfig & typeof defaultConfig>({ namespace: "test", storage, defaultConfig });
-    let children: jest.Mock<React.ReactNode, Arguments<AdminConfigProps<IConfig & typeof defaultConfig>["children"]>>;
+    let children: jest.Mock<React.ReactNode, Parameters<AdminConfigProps<IConfig & typeof defaultConfig>["children"]>>;
 
     beforeEach(() => {
       config = createConfig<IConfig & typeof defaultConfig>({
@@ -312,7 +315,7 @@ describe("react-runtime-config", () => {
           riri: ["the best", "not the best"],
         },
       });
-      children = jest.fn<React.ReactNode, Arguments<AdminConfigProps<IConfig & typeof defaultConfig>["children"]>>(
+      children = jest.fn<React.ReactNode, Parameters<AdminConfigProps<IConfig & typeof defaultConfig>["children"]>>(
         () => <div />,
       );
 
@@ -575,8 +578,9 @@ describe("react-runtime-config", () => {
         },
       ];
 
-      expect(children.mock.calls[2][0].fields).toEqual(expectedFields);
-      expect(children.mock.calls.length).toBe(3);
+      expect(children.mock.calls[9][0].fields).toEqual(expectedFields);
+      // One call by field (localstorage events)
+      expect(children.mock.calls.length).toBe(10);
     });
 
     it("should not erase values if I'm submit just after a reset", () => {
@@ -657,8 +661,9 @@ describe("react-runtime-config", () => {
         },
       ];
 
-      expect(children.mock.calls[2][0].fields).toEqual(expectedFields);
-      expect(children.mock.calls.length).toBe(3);
+      expect(children.mock.calls[9][0].fields).toEqual(expectedFields);
+      // One call by field (localstorage events)
+      expect(children.mock.calls.length).toBe(10);
     });
   });
 
