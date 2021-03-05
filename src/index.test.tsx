@@ -9,7 +9,7 @@ import createConfig from "./";
 import { ConfigProps } from "./Config";
 import { AdminConfigProps } from "./AdminConfig";
 import "@testing-library/jest-dom/extend-expect";
-// import { renderHook } from "@testing-library/react-hooks";
+import { HookResult, renderHook } from "@testing-library/react-hooks";
 
 // Localstorage mock
 let store = {};
@@ -184,7 +184,7 @@ describe("react-runtime-config", () => {
       const { Config } = createConfig<IConfig>({ namespace: "test", storage });
 
       expect(() => render(<Config children={({ getConfig }) => getConfig("foo")} />)).toThrowError(
-        "INVALID CONFIG: foo must be present inside config map, under window.test.",
+        "INVALID CONFIG: foo must be present inside config map, under window.test",
       );
     });
 
@@ -312,7 +312,7 @@ describe("react-runtime-config", () => {
         defaultConfig,
         types: {
           aBoolean: "boolean",
-          riri: ["the best", "not the best"],
+          riri: ["c", "d"],
         },
       });
       children = jest.fn<React.ReactNode, Parameters<AdminConfigProps<IConfig & typeof defaultConfig>["children"]>>(
@@ -328,158 +328,100 @@ describe("react-runtime-config", () => {
     });
 
     it("should return all the config fields", () => {
-      const expectedFields = [
-        {
-          path: "picsou",
-          isFromStorage: true,
-          isEditing: false,
-          defaultValue: null,
-          storageValue: "$$$",
-          value: "$$$",
-          windowValue: "a",
-          type: "string",
-        },
-        {
-          path: "donald",
-          isFromStorage: false,
-          isEditing: false,
-          defaultValue: null,
-          storageValue: null,
-          value: "b",
-          windowValue: "b",
-          type: "string",
-        },
-        {
-          path: "riri",
-          isFromStorage: false,
-          isEditing: false,
-          defaultValue: null,
-          storageValue: null,
-          value: "c",
-          windowValue: "c",
-          type: ["the best", "not the best"],
-        },
-        {
-          path: "loulou",
-          isFromStorage: false,
-          isEditing: false,
-          defaultValue: null,
-          storageValue: null,
-          value: "d",
-          windowValue: "d",
-          type: "string",
-        },
-        {
-          path: "foo",
-          isFromStorage: false,
-          isEditing: false,
-          defaultValue: null,
-          storageValue: null,
-          value: "from-window",
-          windowValue: "from-window",
-          type: "string",
-        },
-        {
-          path: "aBoolean",
-          isFromStorage: false,
-          isEditing: false,
-          defaultValue: null,
-          storageValue: null,
-          value: true,
-          windowValue: true,
-          type: "boolean",
-        },
-        {
-          path: "batman",
-          isFromStorage: false,
-          isEditing: false,
-          defaultValue: "from-default",
-          storageValue: null,
-          value: "from-default",
-          windowValue: null,
-          type: "string",
-        },
-      ];
-      expect(children.mock.calls[0][0].fields).toEqual(expectedFields);
+      expect(children.mock.calls[0][0].fields).toMatchInlineSnapshot(`
+        Array [
+          Object {
+            "defaultValue": null,
+            "isEditing": false,
+            "isFromStorage": false,
+            "path": "aBoolean",
+            "storageValue": null,
+            "type": "boolean",
+            "value": true,
+            "windowValue": true,
+          },
+          Object {
+            "defaultValue": null,
+            "isEditing": false,
+            "isFromStorage": false,
+            "path": "riri",
+            "storageValue": null,
+            "type": Array [
+              "c",
+              "d",
+            ],
+            "value": "c",
+            "windowValue": "c",
+          },
+          Object {
+            "defaultValue": null,
+            "isEditing": false,
+            "isFromStorage": true,
+            "path": "picsou",
+            "storageValue": "$$$",
+            "type": "string",
+            "value": "$$$",
+            "windowValue": "a",
+          },
+          Object {
+            "defaultValue": null,
+            "isEditing": false,
+            "isFromStorage": false,
+            "path": "donald",
+            "storageValue": null,
+            "type": "string",
+            "value": "b",
+            "windowValue": "b",
+          },
+          Object {
+            "defaultValue": null,
+            "isEditing": false,
+            "isFromStorage": false,
+            "path": "loulou",
+            "storageValue": null,
+            "type": "string",
+            "value": "d",
+            "windowValue": "d",
+          },
+          Object {
+            "defaultValue": null,
+            "isEditing": false,
+            "isFromStorage": false,
+            "path": "foo",
+            "storageValue": null,
+            "type": "string",
+            "value": "from-window",
+            "windowValue": "from-window",
+          },
+          Object {
+            "defaultValue": "from-default",
+            "isEditing": false,
+            "isFromStorage": false,
+            "path": "batman",
+            "storageValue": null,
+            "type": "string",
+            "value": "from-default",
+            "windowValue": null,
+          },
+        ]
+      `);
     });
 
     it("should change the value on field change", () => {
       children.mock.calls[0][0].onFieldChange("picsou", "plop");
 
-      const expectedFields = [
-        {
-          path: "picsou",
-          isFromStorage: true,
-          isEditing: true,
-          defaultValue: null,
-          storageValue: "$$$",
-          value: "plop",
-          windowValue: "a",
-          type: "string",
-        },
-        {
-          path: "donald",
-          isFromStorage: false,
-          isEditing: false,
-          defaultValue: null,
-          storageValue: null,
-          value: "b",
-          windowValue: "b",
-          type: "string",
-        },
-        {
-          path: "riri",
-          isFromStorage: false,
-          isEditing: false,
-          defaultValue: null,
-          storageValue: null,
-          value: "c",
-          windowValue: "c",
-          type: ["the best", "not the best"],
-        },
-        {
-          path: "loulou",
-          isFromStorage: false,
-          isEditing: false,
-          defaultValue: null,
-          storageValue: null,
-          value: "d",
-          windowValue: "d",
-          type: "string",
-        },
-        {
-          path: "foo",
-          isFromStorage: false,
-          isEditing: false,
-          defaultValue: null,
-          storageValue: null,
-          value: "from-window",
-          windowValue: "from-window",
-          type: "string",
-        },
-        {
-          path: "aBoolean",
-          isFromStorage: false,
-          isEditing: false,
-          defaultValue: null,
-          storageValue: null,
-          value: true,
-          windowValue: true,
-          type: "boolean",
-        },
-        {
-          path: "batman",
-          isFromStorage: false,
-          isEditing: false,
-          defaultValue: "from-default",
-          storageValue: null,
-          value: "from-default",
-          windowValue: null,
-          type: "string",
-        },
-      ];
+      const picsouField = children.mock.calls[1][0].fields.find(i => i.path === "picsou");
 
-      expect(children.mock.calls[1][0].fields).toEqual(expectedFields);
+      expect(picsouField).toEqual({
+        path: "picsou",
+        isFromStorage: true,
+        isEditing: true,
+        defaultValue: null,
+        storageValue: "$$$",
+        value: "plop",
+        windowValue: "a",
+        type: "string",
+      });
     });
 
     it("should update storage value on submit", () => {
@@ -488,7 +430,8 @@ describe("react-runtime-config", () => {
       children.mock.calls[0][0].onFieldChange("picsou", "plop");
       children.mock.calls[1][0].submit();
 
-      expect(children.mock.calls[2][0].fields[0]).toEqual({
+      const picsouField = children.mock.calls[2][0].fields.find(i => i.path === "picsou");
+      expect(picsouField).toEqual({
         path: "picsou",
         isFromStorage: true,
         isEditing: false,
@@ -505,80 +448,7 @@ describe("react-runtime-config", () => {
       children.mock.calls[0][0].onFieldChange("picsou", "plop");
       children.mock.calls[1][0].reset();
 
-      const expectedFields = [
-        {
-          path: "picsou",
-          isFromStorage: false,
-          isEditing: false,
-          defaultValue: null,
-          storageValue: null,
-          value: "a",
-          windowValue: "a",
-          type: "string",
-        },
-        {
-          path: "donald",
-          isFromStorage: false,
-          isEditing: false,
-          defaultValue: null,
-          storageValue: null,
-          value: "b",
-          windowValue: "b",
-          type: "string",
-        },
-        {
-          path: "riri",
-          isFromStorage: false,
-          isEditing: false,
-          defaultValue: null,
-          storageValue: null,
-          value: "c",
-          windowValue: "c",
-          type: ["the best", "not the best"],
-        },
-        {
-          path: "loulou",
-          isFromStorage: false,
-          isEditing: false,
-          defaultValue: null,
-          storageValue: null,
-          value: "d",
-          windowValue: "d",
-          type: "string",
-        },
-        {
-          path: "foo",
-          isFromStorage: false,
-          isEditing: false,
-          defaultValue: null,
-          storageValue: null,
-          value: "from-window",
-          windowValue: "from-window",
-          type: "string",
-        },
-        {
-          path: "aBoolean",
-          isFromStorage: false,
-          isEditing: false,
-          defaultValue: null,
-          storageValue: null,
-          value: true,
-          windowValue: true,
-          type: "boolean",
-        },
-        {
-          path: "batman",
-          isFromStorage: false,
-          isEditing: false,
-          defaultValue: "from-default",
-          storageValue: null,
-          value: "from-default",
-          windowValue: null,
-          type: "string",
-        },
-      ];
-
-      expect(children.mock.calls[9][0].fields).toEqual(expectedFields);
+      expect(children.mock.calls[9][0].fields.reduce((mem, field) => mem || field.isFromStorage, false)).toEqual(false);
       // One call by field (localstorage events)
       expect(children.mock.calls.length).toBe(10);
     });
@@ -588,82 +458,152 @@ describe("react-runtime-config", () => {
       children.mock.calls[1][0].reset();
       children.mock.calls[2][0].submit(); // This don't call another loop since all user values are undefined
 
-      const expectedFields = [
-        {
-          path: "picsou",
-          isFromStorage: false,
-          isEditing: false,
-          defaultValue: null,
-          storageValue: null,
-          value: "a",
-          windowValue: "a",
-          type: "string",
-        },
-        {
-          path: "donald",
-          isFromStorage: false,
-          isEditing: false,
-          defaultValue: null,
-          storageValue: null,
-          value: "b",
-          windowValue: "b",
-          type: "string",
-        },
-        {
-          path: "riri",
-          isFromStorage: false,
-          isEditing: false,
-          defaultValue: null,
-          storageValue: null,
-          value: "c",
-          windowValue: "c",
-          type: ["the best", "not the best"],
-        },
-        {
-          path: "loulou",
-          isFromStorage: false,
-          isEditing: false,
-          defaultValue: null,
-          storageValue: null,
-          value: "d",
-          windowValue: "d",
-          type: "string",
-        },
-        {
-          path: "foo",
-          isFromStorage: false,
-          isEditing: false,
-          defaultValue: null,
-          storageValue: null,
-          value: "from-window",
-          windowValue: "from-window",
-          type: "string",
-        },
-        {
-          path: "aBoolean",
-          isFromStorage: false,
-          isEditing: false,
-          defaultValue: null,
-          storageValue: null,
-          value: true,
-          windowValue: true,
-          type: "boolean",
-        },
-        {
-          path: "batman",
-          isFromStorage: false,
-          isEditing: false,
-          defaultValue: "from-default",
-          storageValue: null,
-          value: "from-default",
-          windowValue: null,
-          type: "string",
-        },
-      ];
-
-      expect(children.mock.calls[9][0].fields).toEqual(expectedFields);
+      const picsouField = children.mock.calls[9][0].fields.find(i => i.path === "picsou");
+      expect(picsouField).toEqual({
+        path: "picsou",
+        isFromStorage: false,
+        isEditing: false,
+        defaultValue: null,
+        storageValue: null,
+        value: "a",
+        windowValue: "a",
+        type: "string",
+      });
       // One call by field (localstorage events)
       expect(children.mock.calls.length).toBe(10);
+    });
+  });
+
+  describe("useAdminConfig", () => {
+    type BatmanStore = {
+      batman: string;
+      robin: string;
+      catwoman: string;
+      isBadass: boolean;
+      vilain: "Joker" | "Mr Freeze";
+      anniversary: number;
+    };
+    const options = {
+      namespace: "test",
+      storage,
+      defaultConfig: {
+        batman: "from-default",
+        catwoman: "from-default",
+      },
+      types: {
+        catwoman: "string" as const,
+        isBadass: "boolean" as const,
+        anniversary: "number" as const,
+        vilain: ["Joker", "Mr Freeze"],
+      },
+    };
+
+    const { useAdminConfig } = createConfig<BatmanStore>(options);
+    let result: HookResult<ReturnType<typeof useAdminConfig>>;
+
+    beforeEach(() => {
+      set(window, "test", { robin: "from-window", isBadass: true, anniversary: 80, vilain: "Joker" });
+
+      const { useAdminConfig } = createConfig<BatmanStore>(options);
+      const hookResults = renderHook(() => useAdminConfig());
+      result = hookResults.result;
+      act(() => {
+        storage.setItem("test.catwoman", "from-localstorage");
+      });
+    });
+
+    it("should have the correct namespace", () => {
+      expect(result.current.namespace).toBe("test");
+    });
+
+    it("should return all the configs fields", () => {
+      expect(result.current.fields).toMatchInlineSnapshot(`
+        Array [
+          Object {
+            "defaultValue": "from-default",
+            "isFromStorage": true,
+            "path": "catwoman",
+            "storageValue": "from-localstorage",
+            "type": "string",
+            "value": "from-localstorage",
+            "windowValue": null,
+          },
+          Object {
+            "defaultValue": null,
+            "isFromStorage": false,
+            "path": "isBadass",
+            "storageValue": null,
+            "type": "boolean",
+            "value": true,
+            "windowValue": true,
+          },
+          Object {
+            "defaultValue": null,
+            "isFromStorage": false,
+            "path": "anniversary",
+            "storageValue": null,
+            "type": "number",
+            "value": 80,
+            "windowValue": 80,
+          },
+          Object {
+            "defaultValue": null,
+            "isFromStorage": false,
+            "path": "vilain",
+            "storageValue": null,
+            "type": Array [
+              "Joker",
+              "Mr Freeze",
+            ],
+            "value": "Joker",
+            "windowValue": "Joker",
+          },
+          Object {
+            "defaultValue": null,
+            "isFromStorage": false,
+            "path": "robin",
+            "storageValue": null,
+            "type": "string",
+            "value": "from-window",
+            "windowValue": "from-window",
+          },
+          Object {
+            "defaultValue": "from-default",
+            "isFromStorage": false,
+            "path": "batman",
+            "storageValue": null,
+            "type": "string",
+            "value": "from-default",
+            "windowValue": null,
+          },
+        ]
+      `);
+    });
+
+    it("should be able to reset the store", () => {
+      // Have some localstorage values before
+      expect(result.current.fields.reduce((mem, field) => mem || field.isFromStorage, false)).toEqual(true);
+
+      // Reset
+      act(() => result.current.reset());
+
+      // No more locastorage values
+      expect(result.current.fields.reduce((mem, field) => mem || field.isFromStorage, false)).toEqual(false);
+    });
+    it("should proxy setConfig", () => {
+      act(() => {
+        result.current.setConfig("isBadass", false);
+      });
+
+      expect(result.current.fields.find(f => f.path === "isBadass")).toEqual({
+        defaultValue: null,
+        isFromStorage: true, // <-
+        path: "isBadass",
+        storageValue: false, // <-
+        type: "boolean",
+        value: false, // <-
+        windowValue: true,
+      });
     });
   });
 

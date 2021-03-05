@@ -4,6 +4,7 @@ import React from "react";
 
 import AdminConfigBase, { AdminConfigProps } from "./AdminConfig";
 import ConfigBase, { ConfigProps } from "./Config";
+import useAdminConfig from "./useAdminConfig";
 import useConfigBase from "./useConfig";
 
 export { ConfigProps, AdminConfigProps };
@@ -53,7 +54,7 @@ export function createConfig<TConfig>(options: ConfigOptions<TConfig>) {
     defaultConfig: {},
     types: {},
     ...options,
-    namespace: namespace.slice(-1) === "." ? namespace : `${namespace}.`,
+    namespace: namespace.slice(-1) === "." ? namespace.slice(0, -1) : namespace,
   };
 
   /**
@@ -61,7 +62,7 @@ export function createConfig<TConfig>(options: ConfigOptions<TConfig>) {
    */
   const getStorageValue = (path: Extract<keyof TConfig, string>) => {
     if (injected.storage && injected.localOverride) {
-      const value = injected.storage.getItem(`${injected.namespace}${path}`);
+      const value = injected.storage.getItem(`${injected.namespace}.${path}`);
       return value === "true" || value === "false" ? value === "true" : value;
     } else {
       return null;
@@ -71,7 +72,7 @@ export function createConfig<TConfig>(options: ConfigOptions<TConfig>) {
   /**
    * Get a config value from window)
    */
-  const getWindowValue = (path: Extract<keyof TConfig, string>) => get(window, `${injected.namespace}${path}`, null);
+  const getWindowValue = (path: Extract<keyof TConfig, string>) => get(window, `${injected.namespace}.${path}`, null);
 
   /**
    * Get a config value from storage, window or defaultValues
@@ -97,9 +98,9 @@ export function createConfig<TConfig>(options: ConfigOptions<TConfig>) {
     value: TConfig[K],
   ) {
     if (getWindowValue(path) === value) {
-      injected.storage.removeItem(`${injected.namespace}${path}`);
+      injected.storage.removeItem(`${injected.namespace}.${path}`);
     } else {
-      injected.storage.setItem(`${injected.namespace}${path}`, String(value));
+      injected.storage.setItem(`${injected.namespace}.${path}`, String(value));
     }
     window.dispatchEvent(new Event("storage"));
   }
@@ -108,11 +109,14 @@ export function createConfig<TConfig>(options: ConfigOptions<TConfig>) {
    * Get all consolidate config values.
    */
   function getAllConfig(): TConfig {
-    // `slice(0, -1)`is for removing the trailing point
-    const windowKeys = Object.keys(get(window, injected.namespace.slice(0, -1), {})) as any;
+    const windowKeys = Object.keys(get(window, injected.namespace, {})) as any;
     const defaultKeys = Object.keys(options.defaultConfig || {});
+    const configKeys = Object.keys(injected.types);
 
-    return uniq([...windowKeys, ...defaultKeys]).reduce((mem, key) => ({ ...mem, [key]: getConfig(key) }), {});
+    return uniq([...configKeys, ...windowKeys, ...defaultKeys]).reduce(
+      (mem, key) => ({ ...mem, [key]: getConfig(key) }),
+      {},
+    );
   }
 
   return {
@@ -143,6 +147,14 @@ export function createConfig<TConfig>(options: ConfigOptions<TConfig>) {
       );
     },
     useConfig: useConfigBase<TConfig>({
+      getConfig,
+      getAllConfig,
+      getStorageValue,
+      getWindowValue,
+      setConfig,
+      ...injected,
+    }),
+    useAdminConfig: useAdminConfig<TConfig>({
       getConfig,
       getAllConfig,
       getStorageValue,

@@ -105,7 +105,7 @@ export class AdminConfig<T> extends React.Component<AdminConfigProps<T> & Inject
   private onReset = () => {
     // Reset storage
     this.getConfigKeys().forEach(path => {
-      this.props.storage.removeItem(`${this.props.namespace}${path}`);
+      this.props.storage.removeItem(`${this.props.namespace}.${path}`);
     });
 
     // Reset user values
