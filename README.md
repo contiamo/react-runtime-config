@@ -66,7 +66,7 @@ localStorage.setItem("MY_APP_CONFIG.primaryColor", "green");
 
 The `localStorage` option could provide a nice delineation between environments: you _could_ set your local environment to green, and staging to red for example, in order to never be confused about what you're looking at when developing locally and testing against a deployed development environment: if it's green, it's local.
 
-This configuration is then easily read by the simple React component that this library exports.
+This configuration is then easily read by the simple React hook that this library exports.
 
 ## Getting started
 
@@ -94,38 +94,39 @@ const defaultConfig = {
 export type ConfigType = MandatoryConfig & typeof defaultConfig;
 
 /**
- * Config and AdminConfig are now React components that
- * you can use in your app.
+ * `useConfig` and `useAdminConfig` are now React hooks that you can use in your app.
  *
- * Config reads the config, AdminConfig provides data in order
+ * `useConfig` provides config getter & setter, `useAdminConfig` provides data in order
  * to visualize your config map with ease. More on this further
  * down.
  */
 
-export const { Config, AdminConfig } = createConfig<ConfigType>({
+export const { useConfig, useAdminConfig } = createConfig<ConfigType>({
   namespace: "MY_APP_CONFIG",
   defaultConfig,
-  // Types are totally optionals since they are just metadata for the AdminConfig
+  // Types are totally optionals since they are just metadata for the `useAdminConfig`
   types: {
     myFeatureFlag: "boolean",
     color: ["pink", "red", "blue"], // Enum type
     backendUrl: "string",
   },
 });
-
-export default Config;
 ```
 
-You can now use the created components everywhere in your application.
+You can now use the created hooks everywhere in your application. Thoses hooks are totally typesafe, connected to your configuration. This means that you can easily track down all your configuration usage across your entire application and have autocompletion on the keys.
 
 ### Usage
 
 ```tsx
 // components/MyComponents.tsx
 import react from "React";
-import Config from "./Config";
+import { useConfig } from "./Config";
 
-const MyComponent = () => <Config>{({ getConfig }) => <h1 style={{ color: getConfig("color") }}>My title</h1>}</Config>;
+const MyComponent = () => {
+  const { getConfig } = useConfig();
+
+  return <h1 style={{ color: getConfig("color") }}>My title</h1>;
+};
 ```
 
 The title will have a different color regarding our current environment.
@@ -166,52 +167,63 @@ interface ConfigOptions {
 
 ## Create an Administration Page
 
-To allow easy management of your configuration, we provide a smart component called `<AdminConfig />` that provides all the data that you need in order to assemble an awesome administration page where the configuration of your app can be referenced and managed.
+To allow easy management of your configuration, we provide a smart react hook called `useAdminConfig` that provides all the data that you need in order to assemble an awesome administration page where the configuration of your app can be referenced and managed.
 
 **Note:** we are using [`@operational/components`](https://github.com/contiamo/operational-components) for this example, but a UI of config values _can_ be assembled with any UI library, or even with plain ole HTML-tag JSX.
 
 ```ts
 // pages/ConfigurationPage.tsx
 import { Page, Card, Input, Button, Checkbox } from "@operational/components";
-import { AdminConfig } from "./components/Config";
+import { useAdminConfig } from "./components/Config";
 
-export default () => (
-  <Page title="Configuration">
-    <Card title="Configuration">
-      <AdminConfig>
-        {({ fields, onFieldChange, submit, reset }) => (
-          <>
-            {fields.map(field =>
-              field.type === "boolean" ? (
-                <Checkbox
-                  key={field.path}
-                  value={field.value}
-                  label={field.path}
-                  onChange={val => onFieldChange(field.path, val)}
-                />
-              ) : (
-                <Input
-                  key={field.path}
-                  value={field.value}
-                  label={field.path}
-                  onChange={val => onFieldChange(field.path, val)}
-                />
-              ),
-            )}
-            <Button onClick={submit}>Update config</Button>
-            <Button onClick={reset}>Reset config</Button>
-          </>
+export default () => {
+  const { fields, setConfig, reset } = useAdminConfig();
+
+  return (
+    <Page title="Configuration">
+      <Card title="Configuration">
+        {fields.map(field =>
+          field.type === "boolean" ? (
+            <Checkbox
+              key={field.path}
+              value={field.value}
+              label={field.path}
+              onChange={val => setConfig(field.path, val)}
+            />
+          ) : (
+            <Input
+              key={field.path}
+              value={field.value}
+              label={field.path}
+              onChange={val => setConfig(field.path, val)}
+            />
+          ),
         )}
-      </AdminConfig>
-    </Card>
-  </Page>
-);
+        <Button onClick={reset}>Reset config</Button>
+      </Card>
+    </Page>
+  );
+};
 ```
 
 You have also access to `field.windowValue` and `field.storageValue` if you want implement more advanced UX on this page.
 
+## Legacy React components
+
+If for any reason, you can't (or don't want) to use react hooks, `createConfig` also expose a legacy `Config` and `AdminConfig` components, thoses components have the same API than the hooks but with a render props pattern.
+
+Example:
+
+```tsx
+// components/MyComponents.tsx
+import react from "React";
+import { Config } from "./Config"; // need to be exported!
+
+const MyComponent = () => <Config>{({ getConfig }) => <h1 style={{ color: getConfig("color") }}>My title</h1>}</Config>;
+```
+
 ## Moar Power (if needed)
 
-We also expose from `createConfig` a simple `getConfig`, `getAllConfig` and `setConfig`. These functions can be used standalone and do not require use of the `Config` component. This can be useful for accessing or mutating configuration values in component lifecycle hooks, or anywhere else outside of render.
+We also expose from `createConfig` a simple `getConfig`, `getAllConfig` and `setConfig`. These functions can be used standalone and do not require use of the `useConfig` react hooks. This can be useful for accessing or mutating configuration values in component lifecycle hooks, or anywhere else outside of render.
 
-These functions and are exactly the same as their counterparts available inside the `Config` component, the only thing you lose is the hot config reload.
+These functions and are exactly the same as their counterparts available inside the `useConfig` react hook, the only thing you lose is the hot config reload.
