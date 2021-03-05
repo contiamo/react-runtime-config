@@ -4,10 +4,10 @@ import React from "react";
 
 import AdminConfigBase, { AdminConfigProps } from "./AdminConfig";
 import ConfigBase, { ConfigProps } from "./Config";
-import useAdminConfig from "./useAdminConfig";
+import useAdminConfig, { Field as AdminField } from "./useAdminConfig";
 import useConfigBase from "./useConfig";
 
-export { ConfigProps, AdminConfigProps };
+export { ConfigProps, AdminConfigProps, AdminField };
 
 export type RuntimeType = "string" | "boolean" | "number" | string[];
 

@@ -3,7 +3,7 @@ import React from "react";
 
 import { InjectedProps, RuntimeType } from ".";
 
-export type Field<T, K extends keyof T = Extract<keyof T, string>> = Array<{
+export type Fields<T, K extends keyof T = Extract<keyof T, string>> = Array<{
   path: K;
   defaultValue: T[K] | null;
   windowValue: any;
@@ -19,7 +19,7 @@ export interface AdminConfigProps<T> {
     /**
      * List of all config values
      */
-    fields: Field<T>;
+    fields: Fields<T>;
     /**
      * Handler to update `fields.value`
      */
