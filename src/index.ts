@@ -40,10 +40,13 @@ export {
   AdminFields,
 };
 
-export function createConfig<TSchema extends Record<string, Config>>(options: ConfigOptions<TSchema>) {
-  const injected: Pick<InjectedProps<TSchema>, keyof ConfigOptions<TSchema>> = {
+export function createConfig<TSchema extends Record<string, Config>, TNamespace extends string = "">(
+  options: ConfigOptions<TSchema, TNamespace>,
+) {
+  const injected: Pick<InjectedProps<TSchema, TNamespace>, keyof ConfigOptions<TSchema, TNamespace>> = {
     storage: window.localStorage,
     localOverride: true,
+    useConfigNamespace: "" as TNamespace,
     ...options,
   };
 
@@ -79,11 +82,17 @@ export function createConfig<TSchema extends Record<string, Config>>(options: Co
 
   /**
    * Get a config value from storage, window or defaultValues
+   *
+   * @throws
    */
   function getConfig<K extends keyof ResolvedSchema<TSchema>>(path: K): ResolvedSchema<TSchema>[K] {
     const defaultValue = options.schema[path].default as ResolvedSchema<TSchema>[K];
     const storageValue = getStorageValue(path);
     const windowValue = getWindowValue(path);
+
+    if (defaultValue === undefined && windowValue === null) {
+      throw new Error(`Config key "${path}" need to be defined in "window.${injected.namespace}.${path}!`);
+    }
 
     return storageValue !== null ? storageValue : windowValue !== null ? windowValue : defaultValue;
   }
@@ -137,7 +146,7 @@ export function createConfig<TSchema extends Record<string, Config>>(options: Co
   getAllConfig();
 
   return {
-    useConfig: createUseConfig<TSchema>({
+    useConfig: createUseConfig<TSchema, TNamespace>({
       getConfig,
       getAllConfig,
       getStorageValue,
@@ -145,7 +154,7 @@ export function createConfig<TSchema extends Record<string, Config>>(options: Co
       setConfig,
       ...injected,
     }),
-    useAdminConfig: createUseAdminConfig<TSchema>({
+    useAdminConfig: createUseAdminConfig<TSchema, TNamespace>({
       getConfig,
       getAllConfig,
       getStorageValue,

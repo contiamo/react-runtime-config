@@ -2,7 +2,9 @@ import { InjectedProps, Config, ResolvedConfigValue, AdminFields } from "./types
 import { useCallback, useMemo } from "react";
 import { useWatchLocalstorageEvents } from "./utils";
 
-export function createUseAdminConfig<T extends Record<string, Config>>(props: InjectedProps<T>) {
+export function createUseAdminConfig<T extends Record<string, Config>, TNamespace extends string>(
+  props: InjectedProps<T, TNamespace>,
+) {
   return () => {
     const localstorageDep = useWatchLocalstorageEvents(props.storage, props.localOverride);
 

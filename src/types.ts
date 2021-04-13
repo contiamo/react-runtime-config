@@ -1,4 +1,4 @@
-export interface ConfigOptions<TSchema extends Record<string, Config>> {
+export interface ConfigOptions<TSchema extends Record<string, Config>, TNamespace extends string> {
   /**
    * Namespace of the configuration
    *
@@ -24,6 +24,26 @@ export interface ConfigOptions<TSchema extends Record<string, Config>> {
    * @default true
    */
   localOverride?: boolean;
+
+  /**
+   * Namespace for `useConfig()` return methods.
+   *
+   * Example:
+   * ```
+   *  // MyConfig.ts
+   *  export const { useConfig } = createConfig({
+   *    useConfigNamespace: "hello"
+   *   });
+   *
+   * // In a react component
+   * const {
+   *   getHelloConfig,
+   *   setHelloConfig,
+   *   getAllHelloConfig,
+   * } = useConfig();
+   * ```
+   */
+  useConfigNamespace?: TNamespace;
 }
 
 export type Config = StringConfig | NumberConfig | BooleanConfig | CustomConfig;
@@ -91,8 +111,13 @@ export const isNumberConfig = (config: Config): config is NumberConfig => config
 export const isBooleanConfig = (config: Config): config is BooleanConfig => config.type === "boolean";
 export const isCustomConfig = (config: Config): config is CustomConfig => config.type === "custom";
 
-export interface InjectedProps<TSchema extends Record<string, Config>, TConfig = ResolvedSchema<TSchema>> {
+export interface InjectedProps<
+  TSchema extends Record<string, Config>,
+  TNamespace extends string,
+  TConfig = ResolvedSchema<TSchema>
+> {
   namespace: string;
+  useConfigNamespace: TNamespace;
   schema: TSchema;
   storage: Storage;
   localOverride: boolean;
@@ -103,6 +128,7 @@ export interface InjectedProps<TSchema extends Record<string, Config>, TConfig =
   getStorageValue: <K extends keyof TSchema>(path: K) => ResolvedConfigValue<TSchema[K]> | null;
 }
 
+// useAdminConfig types
 export type AdminField<TSchema extends Record<string, Config>, TPath extends keyof TSchema> = TSchema[TPath] & {
   path: TPath;
   windowValue: ResolvedConfigValue<TSchema[TPath]> | null;
@@ -122,3 +148,23 @@ export type AdminFields<TSchema extends Record<string, Config>> = TupleFromInter
     [key in keyof TSchema]: AdminField<TSchema, key>;
   }
 >;
+
+// useConfig types
+type UseConfigReturnType<TSchema extends Record<string, Config>> = {
+  getConfig: <K extends keyof TSchema>(path: K) => ResolvedConfigValue<TSchema[K]>;
+  getAllConfig: () => ResolvedSchema<TSchema>;
+  setConfig: <K extends keyof TSchema>(path: K, value: ResolvedConfigValue<TSchema[K]>) => void;
+};
+
+type Namespaced<T, TNamespace extends string> = {
+  [P in keyof T as P extends `getConfig`
+    ? `get${Capitalize<TNamespace>}Config`
+    : P extends "getAllConfig"
+    ? `getAll${Capitalize<TNamespace>}Config`
+    : `set${Capitalize<TNamespace>}Config`]: T[P];
+};
+
+export type NamespacedUseConfigReturnType<
+  TSchema extends Record<string, Config>,
+  TNamespace extends string
+> = Namespaced<UseConfigReturnType<TSchema>, TNamespace>;

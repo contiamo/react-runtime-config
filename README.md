@@ -20,21 +20,6 @@
   <img src="https://img.shields.io/github/license/mashape/apistatus.svg" alt="license MIT (tag)" />
 </p>
 
-## Summary
-
-<!-- START doctoc generated TOC please keep comment here to allow auto update -->
-<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
-
-- [Why](#why)
-- [How](#how)
-- [Getting started](#getting-started)
-  - [Usage](#usage)
-    - [Options](#options)
-- [Create an Administration Page](#create-an-administration-page)
-- [Moar Power (if needed)](#moar-power-if-needed)
-
-<!-- END doctoc generated TOC please keep comment here to allow auto update -->
-
 ## Why
 
 Most web applications usually need to support and function within a variety of distinct environments: local, development, staging, production, on-prem, etc. This project aims to provide flexibility to React applications by making certain properties configurable at runtime, allowing the app to be customized based on a pre-determined configmap respective to the environment. This is especially powerful when combined with [Kubernetes configmaps](https://kubernetes.io/docs/tasks/configure-pod-container/configure-pod-configmap/).
@@ -145,6 +130,41 @@ The priority of config values is as follows:
 - `localStorage.getItem("MY_APP_CONFIG.color")`
 - `window.MY_APP_CONFIG.color`
 - `schema.color.default`
+
+## Namespaced you `useConfig` hook
+
+In a large application, you may have multiple instance of `useConfig` from different `createConfig`. So far every `useConfig` will return a set of `getConfig`, `setConfig` and `getAllConfig`.
+
+To avoid any confusion or having to manually rename every usage of `useConfig` in a large application, you can use the `useConfigNamespace` options.
+
+```ts
+// themeConfig.ts
+export const { useConfig: useThemeConfig } = createConfig({
+  namespace: "theme",
+  schema: {},
+  useConfigNamespace: "theme", // <- here
+});
+
+// apiConfig.ts
+export const { useConfig: useApiConfig } = createConfig({
+  namespace: "api",
+  schema: {},
+  useConfigNamespace: "api", // <- here
+});
+
+// App.ts
+import { useThemeConfig } from "./themeConfig";
+import { useApiConfig } from "./apiConfig";
+
+export const App = () => {
+  // All methods are now namespaces
+  // no more name conflicts :)
+  const { getThemeConfig } = useThemeConfig();
+  const { getApiConfig } = useApiConfig();
+
+  return <div />;
+};
+```
 
 ## Create an Administration Page
 

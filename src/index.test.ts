@@ -52,7 +52,9 @@ describe("localStorage mock", () => {
 
 describe("react-runtime-config", () => {
   const namespace = "test";
-  const createConfigWithDefaults = (config: Pick<Partial<ConfigOptions<never>>, "localOverride" | "namespace"> = {}) =>
+  const createConfigWithDefaults = (
+    config: Pick<Partial<ConfigOptions<never, "">>, "localOverride" | "namespace"> = {},
+  ) =>
     createConfig({
       namespace,
       storage,
@@ -313,6 +315,30 @@ describe("react-runtime-config", () => {
             "url": "http://localhost:5000",
           },
           "port": 8000,
+        }
+      `);
+    });
+
+    it("should return namespaced method", () => {
+      const { useConfig } = createConfig({
+        namespace,
+        schema: {
+          oh: { type: "string", default: "yeah" },
+        },
+        useConfigNamespace: "boom",
+      });
+      const { result } = renderHook(useConfig);
+      const { getAllBoomConfig, getBoomConfig, setBoomConfig } = result.current;
+
+      expect(typeof getAllBoomConfig).toBe("function");
+      expect(typeof getBoomConfig).toBe("function");
+      expect(typeof setBoomConfig).toBe("function");
+
+      expect(getBoomConfig("oh")).toBe("yeah");
+      act(() => setBoomConfig("oh", "popopo"));
+      expect(getAllBoomConfig()).toMatchInlineSnapshot(`
+        Object {
+          "oh": "popopo",
         }
       `);
     });

@@ -23,3 +23,8 @@ export const useWatchLocalstorageEvents = (storage: Storage, localOverride: bool
 
   return key;
 };
+
+export function capitalize<T extends string>(str: T) {
+  if (!str || str.length < 1) return "" as Capitalize<T>;
+  return (str[0].toUpperCase() + str.slice(1)) as Capitalize<T>;
+}
