@@ -16,6 +16,7 @@ import {
   CustomConfig,
   AdminField,
   AdminFields,
+  NamespacedUseConfigReturnType,
 } from "./types";
 import { createUseAdminConfig } from "./createUseAdminConfig";
 import { createUseConfig } from "./createUseConfig";
@@ -153,7 +154,7 @@ export function createConfig<TSchema extends Record<string, Config>, TNamespace 
       getWindowValue,
       setConfig,
       ...injected,
-    }),
+    }) as () => NamespacedUseConfigReturnType<TSchema, TNamespace>, // Hint for the build
     useAdminConfig: createUseAdminConfig<TSchema, TNamespace>({
       getConfig,
       getAllConfig,
