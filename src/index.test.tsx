@@ -1,15 +1,11 @@
 import get from "lodash/get";
 import set from "lodash/set";
 import unset from "lodash/unset";
-import React from "react";
-import { cleanup, render, act } from "@testing-library/react";
 import { Mock } from "ts-mockery";
 
 import createConfig from "./";
-import { ConfigProps } from "./Config";
-import { AdminConfigProps } from "./AdminConfig";
-import "@testing-library/jest-dom/extend-expect";
-import { HookResult, renderHook } from "@testing-library/react-hooks";
+import { renderHook, act } from "@testing-library/react-hooks";
+import { Config } from "./types";
 
 // Localstorage mock
 let store = {};
@@ -29,15 +25,6 @@ const storage = Mock.of<Storage>({
     window.dispatchEvent(new Event("storage"));
   },
 });
-
-interface IConfig {
-  foo: string;
-  riri: string;
-  picsou: string;
-  loulou: string;
-  donald: string;
-  aBoolean: boolean;
-}
 
 describe("localStorage mock", () => {
   afterEach(() => {
@@ -62,569 +49,222 @@ describe("localStorage mock", () => {
 });
 
 describe("react-runtime-config", () => {
+  const namespace = "test";
+  const createConfigWithDefaults = (schema: Record<string, Config> = {}) =>
+    createConfig({
+      namespace,
+      storage,
+      schema: {
+        color: {
+          type: "string",
+          enum: ["blue" as const, "green" as const, "pink" as const],
+          description: "Main color of the application",
+        },
+        backend: {
+          type: "string",
+          description: "Backend url",
+        },
+        port: {
+          type: "number",
+          description: "Backend port",
+          min: 1,
+          max: 65535,
+          default: 8000,
+        },
+        monitoringLink: {
+          type: "custom",
+          description: "Link of the monitoring",
+          parser: value => {
+            if (typeof value === "object" && typeof value.url === "string" && typeof value.displayName === "string") {
+              return { url: value.url as string, displayName: value.displayName as string };
+            }
+            throw new Error("Monitoring link invalid!");
+          },
+        },
+        ...schema,
+      },
+    });
+
   beforeEach(() => {
-    set(window, "test", { picsou: "a", donald: "b", riri: "c", loulou: "d", foo: "from-window", aBoolean: true });
+    set(window, namespace, {
+      color: "blue",
+      backend: "http://localhost",
+      monitoringLink: {
+        url: "http://localhost:5000",
+        displayName: "Monitoring",
+      },
+    });
   });
   afterEach(() => {
-    cleanup();
-    storage.clear();
-    delete (window as any).test;
+    act(() => storage.clear());
+    delete (window as any)[namespace];
   });
 
-  describe("Config", () => {
-    it("should get the localhost value", () => {
-      const { Config } = createConfig<IConfig>({ namespace: "test", storage });
-      const children = jest.fn<React.ReactNode, Parameters<ConfigProps<IConfig>["children"]>>(() => <div />);
-
-      storage.setItem("test.foo", "from-localstorage");
-
-      render(<Config children={children} />);
-
-      expect(children.mock.calls[0][0].getConfig("foo")).toEqual("from-localstorage");
+  describe("getConfig", () => {
+    it("should return the default value", () => {
+      const { getConfig } = createConfigWithDefaults();
+      expect(getConfig("port")).toBe(8000);
     });
 
-    it("should get the window value", () => {
-      const { Config } = createConfig<IConfig>({ namespace: "test", storage });
-      const children = jest.fn<React.ReactNode, Parameters<ConfigProps<IConfig>["children"]>>(() => <div />);
-
-      render(<Config children={children} />);
-
-      expect(children.mock.calls[0][0].getConfig("foo")).toEqual("from-window");
+    it("should return the window default", () => {
+      const { getConfig } = createConfigWithDefaults();
+      expect(getConfig("color")).toBe("blue");
     });
 
-    it("should ignore trailing dot in the namespace", () => {
-      const { Config } = createConfig<IConfig>({ namespace: "test.", storage });
-      const children = jest.fn<React.ReactNode, Parameters<ConfigProps<IConfig>["children"]>>(() => <div />);
-
-      storage.setItem("test.foo", "from-localstorage");
-
-      render(<Config children={children} />);
-
-      expect(children.mock.calls[0][0].getConfig("foo")).toEqual("from-localstorage");
+    it("should return a custom parsed value", () => {
+      const { getConfig } = createConfigWithDefaults();
+      const monitoringLink = getConfig("monitoringLink");
+      expect(monitoringLink.url).toBe("http://localhost:5000");
+      expect(monitoringLink.displayName).toBe("Monitoring");
     });
 
-    it("should rerender the component on localstorage update", () => {
-      const { Config } = createConfig<IConfig>({ namespace: "test", storage });
-      const children = jest.fn<React.ReactNode, Parameters<ConfigProps<IConfig>["children"]>>(() => <div />);
-
-      storage.setItem("test.foo", "from-localstorage");
-
-      render(<Config children={children} />);
-
-      expect(children.mock.calls[0][0].getConfig("foo")).toEqual("from-localstorage");
-
-      storage.setItem("test.foo", "from-localstorage-modified");
-
-      expect(children.mock.calls.length).toEqual(2);
-      expect(children.mock.calls[0][0].getConfig("foo")).toEqual("from-localstorage-modified");
+    it("should return the localstorage value (storage set before)", () => {
+      storage.setItem(`${namespace}.color`, "pink");
+      const { getConfig } = createConfigWithDefaults();
+      expect(getConfig("color")).toBe("pink");
     });
 
-    it("should rerender the component on localstorage update (hook)", async () => {
-      const { useConfig } = createConfig<IConfig>({ namespace: "test", storage });
-      let renderCount = 0;
-      const App = () => {
-        const { getConfig } = useConfig();
-        renderCount++;
-        return <div data-testid="foo">{getConfig("foo")}</div>;
-      };
-
-      storage.setItem("test.foo", "from-localstorage");
-
-      const { findByTestId } = render(<App />);
-      const value = await findByTestId("foo");
-
-      expect(value).toHaveTextContent("from-localstorage");
-
-      act(() => {
-        storage.setItem("test.foo", "from-localstorage-modified");
-      });
-
-      expect(value).toHaveTextContent("from-localstorage-modified");
-      expect(renderCount).toBe(2);
+    it("should return the localstorage value (storage set by the lib", () => {
+      const { getConfig, setConfig } = createConfigWithDefaults();
+      setConfig("color", "green");
+      expect(getConfig("color")).toBe("green");
     });
 
-    it("should not rerender the component on localstorage update if localOverride is disable", () => {
-      const { Config } = createConfig<IConfig>({ namespace: "test", storage, localOverride: false });
-      const children = jest.fn<React.ReactNode, Parameters<ConfigProps<IConfig>["children"]>>(() => <div />);
-
-      storage.setItem("test.foo", "from-localstorage");
-
-      render(<Config children={children} />);
-
-      storage.setItem("test.foo", "from-localstorage-modified");
-
-      expect(children.mock.calls.length).toEqual(1);
-      expect(children.mock.calls[0][0].getConfig("foo")).toEqual("from-window");
+    it("should throw on corrupted window value", () => {
+      const { getConfig } = createConfigWithDefaults();
+      set(window, `${namespace}.color`, 42);
+      expect(() => getConfig("color")).toThrowError(`Config key "color" not valid: not a string`);
     });
 
-    it("should not rerender the component on localstorage update if localOverride is disable (hook)", async () => {
-      const { useConfig } = createConfig<IConfig>({ namespace: "test", storage, localOverride: false });
-      let renderCount = 0;
-      const App = () => {
-        const { getConfig } = useConfig();
-        renderCount++;
-        return <div data-testid="foo">{getConfig("foo")}</div>;
-      };
-
-      storage.setItem("test.foo", "from-localstorage");
-
-      const { findByTestId } = render(<App />);
-      const value = await findByTestId("foo");
-
-      act(() => {
-        storage.setItem("test.foo", "from-localstorage-modified");
-      });
-
-      expect(value).toHaveTextContent("from-window");
-      expect(renderCount).toBe(1);
-    });
-
-    it("should throw if the value is not set in window", () => {
-      unset(window, "test.foo");
-      const { Config } = createConfig<IConfig>({ namespace: "test", storage });
-
-      expect(() => render(<Config children={({ getConfig }) => getConfig("foo")} />)).toThrowError(
-        "INVALID CONFIG: foo must be present inside config map, under window.test",
-      );
-    });
-
-    describe("boolean values", () => {
-      it("should return true from window config", () => {
-        const { Config } = createConfig<IConfig>({ namespace: "test", storage });
-        const children = jest.fn<React.ReactNode, Parameters<ConfigProps<IConfig>["children"]>>(() => <div />);
-
-        set(window, "test.aBoolean", true);
-        render(<Config children={children} />);
-
-        expect(children.mock.calls[0][0].getConfig("aBoolean")).toEqual(true);
-      });
-
-      it("should return false from window config", () => {
-        const { Config } = createConfig<IConfig>({ namespace: "test", storage });
-        const children = jest.fn<React.ReactNode, Parameters<ConfigProps<IConfig>["children"]>>(() => <div />);
-
-        set(window, "test.aBoolean", false);
-        render(<Config children={children} />);
-
-        expect(children.mock.calls[0][0].getConfig("aBoolean")).toEqual(false);
-      });
-
-      it("should return true from localstorage config", () => {
-        const { Config } = createConfig<IConfig>({ namespace: "test", storage });
-        const children = jest.fn<React.ReactNode, Parameters<ConfigProps<IConfig>["children"]>>(() => <div />);
-
-        set(window, "test.foo", false);
-        storage.setItem("test.foo", "true");
-        render(<Config children={children} />);
-
-        expect(children.mock.calls[0][0].getConfig("foo")).toEqual(true);
-      });
-
-      it("should return false from localstorage config", () => {
-        const { Config } = createConfig<IConfig>({ namespace: "test", storage });
-        const children = jest.fn<React.ReactNode, Parameters<ConfigProps<IConfig>["children"]>>(() => <div />);
-
-        set(window, "test.foo", true);
-        storage.setItem("test.foo", "false");
-        render(<Config children={children} />);
-
-        expect(children.mock.calls[0][0].getConfig("foo")).toEqual(false);
-      });
-    });
-
-    describe("default config", () => {
-      it("should return the default config value", () => {
-        unset(window, "test.foo");
-        const { Config } = createConfig<IConfig>({
-          namespace: "test",
-          storage,
-          defaultConfig: { foo: "from-default" },
-        });
-        const children = jest.fn<React.ReactNode, Parameters<ConfigProps<IConfig>["children"]>>(() => <div />);
-
-        render(<Config children={children} />);
-
-        expect(children.mock.calls[0][0].getConfig("foo")).toEqual("from-default");
-      });
-
-      it("should return the window value if defined", () => {
-        const { Config } = createConfig<IConfig>({
-          namespace: "test",
-          storage,
-          defaultConfig: { foo: "from-default" },
-        });
-        const children = jest.fn<React.ReactNode, Parameters<ConfigProps<IConfig>["children"]>>(() => <div />);
-
-        render(<Config children={children} />);
-
-        expect(children.mock.calls[0][0].getConfig("foo")).toEqual("from-window");
-      });
-
-      it("should return the storage value if defined", () => {
-        const { Config } = createConfig<IConfig>({
-          namespace: "test",
-          storage,
-          defaultConfig: { foo: "from-default" },
-        });
-        const children = jest.fn<React.ReactNode, Parameters<ConfigProps<IConfig>["children"]>>(() => <div />);
-        storage.setItem("test.foo", "from-localstorage");
-
-        render(<Config children={children} />);
-
-        expect(children.mock.calls[0][0].getConfig("foo")).toEqual("from-localstorage");
-      });
-    });
-
-    it("should have correct type definition", () => {
-      const { Config } = createConfig<IConfig>({ namespace: "test", storage });
-      render(
-        <Config>
-          {({ getConfig, setConfig }) => {
-            const val: boolean = getConfig("aBoolean");
-            const val2: string = getConfig("donald");
-            setConfig("loulou", "plop");
-            setConfig("aBoolean", true);
-            return (
-              <h1>
-                {val}
-                {val2}
-              </h1>
-            );
-          }}
-        </Config>,
-      );
-
-      expect(1).toBe(1);
-    });
-  });
-
-  describe("AdminConfig", () => {
-    const defaultConfig = {
-      batman: "from-default",
-    };
-    let config = createConfig<IConfig & typeof defaultConfig>({ namespace: "test", storage, defaultConfig });
-    let children: jest.Mock<React.ReactNode, Parameters<AdminConfigProps<IConfig & typeof defaultConfig>["children"]>>;
-
-    beforeEach(() => {
-      config = createConfig<IConfig & typeof defaultConfig>({
-        namespace: "test",
-        storage,
-        defaultConfig,
-        types: {
-          aBoolean: "boolean",
-          riri: ["c", "d"],
-        },
-      });
-      children = jest.fn<React.ReactNode, Parameters<AdminConfigProps<IConfig & typeof defaultConfig>["children"]>>(
-        () => <div />,
-      );
-
-      const { AdminConfig } = config;
-
-      storage.setItem("test.picsou", "$$$");
-
-      // expose children called by AdminConfig
-      render(<AdminConfig>{children}</AdminConfig>);
-    });
-
-    it("should return all the config fields", () => {
-      expect(children.mock.calls[0][0].fields).toMatchInlineSnapshot(`
-        Array [
-          Object {
-            "defaultValue": null,
-            "isEditing": false,
-            "isFromStorage": false,
-            "path": "aBoolean",
-            "storageValue": null,
-            "type": "boolean",
-            "value": true,
-            "windowValue": true,
-          },
-          Object {
-            "defaultValue": null,
-            "isEditing": false,
-            "isFromStorage": false,
-            "path": "riri",
-            "storageValue": null,
-            "type": Array [
-              "c",
-              "d",
-            ],
-            "value": "c",
-            "windowValue": "c",
-          },
-          Object {
-            "defaultValue": null,
-            "isEditing": false,
-            "isFromStorage": true,
-            "path": "picsou",
-            "storageValue": "$$$",
-            "type": "string",
-            "value": "$$$",
-            "windowValue": "a",
-          },
-          Object {
-            "defaultValue": null,
-            "isEditing": false,
-            "isFromStorage": false,
-            "path": "donald",
-            "storageValue": null,
-            "type": "string",
-            "value": "b",
-            "windowValue": "b",
-          },
-          Object {
-            "defaultValue": null,
-            "isEditing": false,
-            "isFromStorage": false,
-            "path": "loulou",
-            "storageValue": null,
-            "type": "string",
-            "value": "d",
-            "windowValue": "d",
-          },
-          Object {
-            "defaultValue": null,
-            "isEditing": false,
-            "isFromStorage": false,
-            "path": "foo",
-            "storageValue": null,
-            "type": "string",
-            "value": "from-window",
-            "windowValue": "from-window",
-          },
-          Object {
-            "defaultValue": "from-default",
-            "isEditing": false,
-            "isFromStorage": false,
-            "path": "batman",
-            "storageValue": null,
-            "type": "string",
-            "value": "from-default",
-            "windowValue": null,
-          },
-        ]
-      `);
-    });
-
-    it("should change the value on field change", () => {
-      children.mock.calls[0][0].onFieldChange("picsou", "plop");
-
-      const picsouField = children.mock.calls[1][0].fields.find(i => i.path === "picsou");
-
-      expect(picsouField).toEqual({
-        path: "picsou",
-        isFromStorage: true,
-        isEditing: true,
-        defaultValue: null,
-        storageValue: "$$$",
-        value: "plop",
-        windowValue: "a",
-        type: "string",
-      });
-    });
-
-    it("should update storage value on submit", () => {
-      expect(storage.getItem("test.picsou")).toEqual("$$$");
-
-      children.mock.calls[0][0].onFieldChange("picsou", "plop");
-      children.mock.calls[1][0].submit();
-
-      const picsouField = children.mock.calls[2][0].fields.find(i => i.path === "picsou");
-      expect(picsouField).toEqual({
-        path: "picsou",
-        isFromStorage: true,
-        isEditing: false,
-        defaultValue: null,
-        storageValue: "plop",
-        value: "plop",
-        windowValue: "a",
-        type: "string",
-      });
-      expect(storage.getItem("test.picsou")).toEqual("plop");
-    });
-
-    it("should reset the local storage", () => {
-      children.mock.calls[0][0].onFieldChange("picsou", "plop");
-      children.mock.calls[1][0].reset();
-
-      expect(children.mock.calls[9][0].fields.reduce((mem, field) => mem || field.isFromStorage, false)).toEqual(false);
-      // One call by field (localstorage events)
-      expect(children.mock.calls.length).toBe(10);
-    });
-
-    it("should not erase values if I'm submit just after a reset", () => {
-      children.mock.calls[0][0].onFieldChange("picsou", "plop");
-      children.mock.calls[1][0].reset();
-      children.mock.calls[2][0].submit(); // This don't call another loop since all user values are undefined
-
-      const picsouField = children.mock.calls[9][0].fields.find(i => i.path === "picsou");
-      expect(picsouField).toEqual({
-        path: "picsou",
-        isFromStorage: false,
-        isEditing: false,
-        defaultValue: null,
-        storageValue: null,
-        value: "a",
-        windowValue: "a",
-        type: "string",
-      });
-      // One call by field (localstorage events)
-      expect(children.mock.calls.length).toBe(10);
-    });
-  });
-
-  describe("useAdminConfig", () => {
-    type BatmanStore = {
-      batman: string;
-      robin: string;
-      catwoman: string;
-      isBadass: boolean;
-      vilain: "Joker" | "Mr Freeze";
-      anniversary: number;
-    };
-    const options = {
-      namespace: "test",
-      storage,
-      defaultConfig: {
-        batman: "from-default",
-        catwoman: "from-default",
-      },
-      types: {
-        catwoman: "string" as const,
-        isBadass: "boolean" as const,
-        anniversary: "number" as const,
-        vilain: ["Joker", "Mr Freeze"],
-      },
-    };
-
-    const { useAdminConfig } = createConfig<BatmanStore>(options);
-    let result: HookResult<ReturnType<typeof useAdminConfig>>;
-
-    beforeEach(() => {
-      set(window, "test", { robin: "from-window", isBadass: true, anniversary: 80, vilain: "Joker" });
-
-      const { useAdminConfig } = createConfig<BatmanStore>(options);
-      const hookResults = renderHook(() => useAdminConfig());
-      result = hookResults.result;
-      act(() => {
-        storage.setItem("test.catwoman", "from-localstorage");
-      });
-    });
-
-    it("should have the correct namespace", () => {
-      expect(result.current.namespace).toBe("test");
-    });
-
-    it("should return all the configs fields", () => {
-      expect(result.current.fields).toMatchInlineSnapshot(`
-        Array [
-          Object {
-            "defaultValue": "from-default",
-            "isFromStorage": true,
-            "path": "catwoman",
-            "storageValue": "from-localstorage",
-            "type": "string",
-            "value": "from-localstorage",
-            "windowValue": null,
-          },
-          Object {
-            "defaultValue": null,
-            "isFromStorage": false,
-            "path": "isBadass",
-            "storageValue": null,
-            "type": "boolean",
-            "value": true,
-            "windowValue": true,
-          },
-          Object {
-            "defaultValue": null,
-            "isFromStorage": false,
-            "path": "anniversary",
-            "storageValue": null,
-            "type": "number",
-            "value": 80,
-            "windowValue": 80,
-          },
-          Object {
-            "defaultValue": null,
-            "isFromStorage": false,
-            "path": "vilain",
-            "storageValue": null,
-            "type": Array [
-              "Joker",
-              "Mr Freeze",
-            ],
-            "value": "Joker",
-            "windowValue": "Joker",
-          },
-          Object {
-            "defaultValue": null,
-            "isFromStorage": false,
-            "path": "robin",
-            "storageValue": null,
-            "type": "string",
-            "value": "from-window",
-            "windowValue": "from-window",
-          },
-          Object {
-            "defaultValue": "from-default",
-            "isFromStorage": false,
-            "path": "batman",
-            "storageValue": null,
-            "type": "string",
-            "value": "from-default",
-            "windowValue": null,
-          },
-        ]
-      `);
-    });
-
-    it("should be able to reset the store", () => {
-      // Have some localstorage values before
-      expect(result.current.fields.reduce((mem, field) => mem || field.isFromStorage, false)).toEqual(true);
-
-      // Reset
-      act(() => result.current.reset());
-
-      // No more locastorage values
-      expect(result.current.fields.reduce((mem, field) => mem || field.isFromStorage, false)).toEqual(false);
-    });
-    it("should proxy setConfig", () => {
-      act(() => {
-        result.current.setConfig("isBadass", false);
-      });
-
-      expect(result.current.fields.find(f => f.path === "isBadass")).toEqual({
-        defaultValue: null,
-        isFromStorage: true, // <-
-        path: "isBadass",
-        storageValue: false, // <-
-        type: "boolean",
-        value: false, // <-
-        windowValue: true,
-      });
+    it("should ignore corrupted storage value", () => {
+      const { getConfig } = createConfigWithDefaults();
+      storage.setItem(`${namespace}.color`, "42");
+      expect(getConfig("color")).toBe("blue");
     });
   });
 
   describe("getAllConfig", () => {
-    it("should return all the config available", () => {
-      const { getAllConfig } = createConfig<IConfig>({ namespace: "test", storage });
+    it("should return the entire consolidate configuration", () => {
+      const { getAllConfig, setConfig } = createConfigWithDefaults();
+      setConfig("color", "green");
 
-      expect(getAllConfig()).toEqual({
-        aBoolean: true,
-        donald: "b",
-        foo: "from-window",
-        loulou: "d",
-        picsou: "a",
-        riri: "c",
-      });
+      expect(getAllConfig()).toMatchInlineSnapshot(`
+        Object {
+          "backend": "http://localhost",
+          "color": "green",
+          "monitoringLink": Object {
+            "displayName": "Monitoring",
+            "url": "http://localhost:5000",
+          },
+          "port": 8000,
+        }
+      `);
+    });
+  });
+
+  describe("setConfig", () => {
+    it("should set a value", () => {
+      const { getConfig, setConfig } = createConfigWithDefaults();
+      expect(getConfig("color")).toBe("blue");
+      setConfig("color", "pink");
+      expect(getConfig("color")).toBe("pink");
     });
 
-    it("should return an empty config if window is undefined", () => {
-      const { getAllConfig } = createConfig<IConfig>({ namespace: "unknown", storage });
+    it("should throw if the type is not respected", () => {
+      const { setConfig } = createConfigWithDefaults();
+      expect(() => setConfig("port", "yolo" as any)).toThrowErrorMatchingInlineSnapshot(
+        `"Expected \\"port=yolo\\" to be a \\"number\\""`,
+      );
+    });
 
-      expect(getAllConfig()).toEqual({});
+    it("should throw if the min value is not respected", () => {
+      const { setConfig } = createConfigWithDefaults();
+      expect(() => setConfig("port", -1)).toThrowErrorMatchingInlineSnapshot(
+        `"Expected \\"port=-1\\" to be greater than 1"`,
+      );
+    });
+
+    it("should throw if the max value is not respected", () => {
+      const { setConfig } = createConfigWithDefaults();
+      expect(() => setConfig("port", 100000)).toThrowErrorMatchingInlineSnapshot(
+        `"Expected \\"port=100000\\" to be lower than 65535"`,
+      );
+    });
+
+    it("should throw if the enum value is not respected", () => {
+      const { setConfig } = createConfigWithDefaults();
+      expect(() => setConfig("color", "red" as any)).toThrowErrorMatchingInlineSnapshot(
+        `"Expected \\"color=red\\" to be one of: blue, green, pink"`,
+      );
+    });
+
+    it("should throw if the value is not respecting a custom parser", () => {
+      const { setConfig } = createConfigWithDefaults();
+      expect(() => setConfig("monitoringLink", "red" as any)).toThrowErrorMatchingInlineSnapshot(
+        `"Monitoring link invalid!"`,
+      );
+    });
+  });
+
+  describe("useConfig", () => {
+    it("should return the correct value from getConfig", () => {
+      const { useConfig } = createConfigWithDefaults();
+      const { result } = renderHook(useConfig);
+      const color = result.current.getConfig("color");
+      expect(color).toBe("blue");
+    });
+
+    it("should return the correct value after setConfig", () => {
+      const { useConfig } = createConfigWithDefaults();
+      const { result } = renderHook(useConfig);
+      act(() => result.current.setConfig("color", "green"));
+      const color = result.current.getConfig("color");
+      expect(color).toBe("green");
+    });
+
+    it("should be able to get all the config", () => {
+      const { useConfig } = createConfigWithDefaults();
+      const { result } = renderHook(useConfig);
+      act(() => result.current.setConfig("color", "green"));
+      const all = result.current.getAllConfig();
+      expect(all).toMatchInlineSnapshot(`
+        Object {
+          "backend": "http://localhost",
+          "color": "green",
+          "monitoringLink": Object {
+            "displayName": "Monitoring",
+            "url": "http://localhost:5000",
+          },
+          "port": 8000,
+        }
+      `);
+    });
+  });
+
+  describe("useAdminConfig", () => {
+    it("should have all the metadata about a field", () => {
+      const { useAdminConfig } = createConfigWithDefaults();
+      storage.setItem(`${namespace}.color`, "pink");
+      const { result } = renderHook(useAdminConfig);
+      const color = result.current.fields.find(({ path }) => path === "color");
+
+      expect(color).toMatchInlineSnapshot(`
+        Object {
+          "description": "Main color of the application",
+          "enum": Array [
+            "blue",
+            "green",
+            "pink",
+          ],
+          "isFromStorage": true,
+          "path": "color",
+          "set": [Function],
+          "storageValue": "pink",
+          "type": "string",
+          "value": "pink",
+          "windowValue": "blue",
+        }
+      `);
     });
   });
 });

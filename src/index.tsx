@@ -1,58 +1,22 @@
 import get from "lodash/get";
-import uniq from "lodash/uniq";
-import React from "react";
+import { parse } from "./parsers";
+import {
+  ConfigOptions,
+  InjectedProps,
+  Config,
+  ResolvedSchema,
+  isStringEnumConfig,
+  isNumberConfig,
+  isCustomConfig,
+} from "./types";
+import { createUseAdminConfig } from "./createUseAdminConfig";
+import { createUseConfig } from "./createUseConfig";
 
-import AdminConfigBase, { AdminConfigProps } from "./AdminConfig";
-import ConfigBase, { ConfigProps } from "./Config";
-import useAdminConfig, { Field as AdminField } from "./useAdminConfig";
-import useConfigBase from "./useConfig";
-
-export { ConfigProps, AdminConfigProps, AdminField };
-
-export type RuntimeType = "string" | "boolean" | "number" | string[];
-
-export interface ConfigOptions<TConfig> {
-  namespace: string;
-  /**
-   * Config default values
-   */
-  defaultConfig?: Partial<TConfig>;
-  /**
-   * Storage adapter
-   *
-   * @default window.localStorage
-   */
-  storage?: Storage;
-  /**
-   * Permit to overidde any config values in storage
-   *
-   * @default true
-   */
-  localOverride?: boolean;
-  /**
-   * Runtime types mapping (metadata for AdminConfig)
-   */
-  types?: { [key in keyof TConfig]?: RuntimeType };
-}
-
-export interface InjectedProps<TConfig> extends Required<ConfigOptions<TConfig>> {
-  getConfig: <K extends Extract<keyof TConfig, string> = Extract<keyof TConfig, string>>(path: K) => TConfig[K];
-  setConfig: <K extends Extract<keyof TConfig, string> = Extract<keyof TConfig, string>>(
-    path: K,
-    value: TConfig[K],
-  ) => void;
-  getAllConfig: () => TConfig;
-  getWindowValue: (path: Extract<keyof TConfig, string>) => any;
-  getStorageValue: (path: Extract<keyof TConfig, string>) => string | boolean | null;
-}
-
-export function createConfig<TConfig>(options: ConfigOptions<TConfig>) {
+export function createConfig<TSchema extends Record<string, Config>>(options: ConfigOptions<TSchema>) {
   const { namespace } = options;
-  const injected = {
+  const injected: Pick<InjectedProps<TSchema>, keyof ConfigOptions<TSchema>> = {
     storage: window.localStorage,
     localOverride: true,
-    defaultConfig: {},
-    types: {},
     ...options,
     namespace: namespace.slice(-1) === "." ? namespace.slice(0, -1) : namespace,
   };
@@ -60,31 +24,40 @@ export function createConfig<TConfig>(options: ConfigOptions<TConfig>) {
   /**
    * Get a config value from the storage (localstorage by default)
    */
-  const getStorageValue = (path: Extract<keyof TConfig, string>) => {
+  const getStorageValue = (path: keyof TSchema) => {
     if (injected.storage && injected.localOverride) {
-      const value = injected.storage.getItem(`${injected.namespace}.${path}`);
-      return value === "true" || value === "false" ? value === "true" : value;
+      try {
+        const rawValue = injected.storage.getItem(`${injected.namespace}.${path}`);
+        return parse(rawValue, options.schema[path]);
+      } catch {
+        return null;
+      }
     } else {
       return null;
     }
   };
 
   /**
-   * Get a config value from window)
+   * Get a config value from window
+   *
+   * @throws
    */
-  const getWindowValue = (path: Extract<keyof TConfig, string>) => get(window, `${injected.namespace}.${path}`, null);
+  const getWindowValue = (path: keyof TSchema) => {
+    try {
+      const rawValue = get(window, `${injected.namespace}.${path}`, null);
+      return rawValue === null ? null : parse(rawValue, options.schema[path]);
+    } catch (e) {
+      throw new Error(`Config key "${path}" not valid: ${e.message}`);
+    }
+  };
 
   /**
    * Get a config value from storage, window or defaultValues
    */
-  function getConfig<K extends Extract<keyof TConfig, string> = Extract<keyof TConfig, string>>(path: K): TConfig[K] {
-    const defaultValue = options.defaultConfig && options.defaultConfig[path];
+  function getConfig<K extends keyof ResolvedSchema<TSchema>>(path: K): ResolvedSchema<TSchema>[K] {
+    const defaultValue = options.schema[path].default as ResolvedSchema<TSchema>[K];
     const storageValue = getStorageValue(path);
     const windowValue = getWindowValue(path);
-
-    if (windowValue === null && defaultValue === undefined) {
-      throw new Error(`INVALID CONFIG: ${path} must be present inside config map, under window.${injected.namespace}`);
-    }
 
     return storageValue !== null ? storageValue : windowValue !== null ? windowValue : defaultValue;
   }
@@ -92,11 +65,30 @@ export function createConfig<TConfig>(options: ConfigOptions<TConfig>) {
   /**
    * Set a config value in the storage.
    * This will also remove the value if the value is the same as the window one.
+   *
+   * @throws
    */
-  function setConfig<K extends Extract<keyof TConfig, string> = Extract<keyof TConfig, string>>(
-    path: K,
-    value: TConfig[K],
-  ) {
+  function setConfig<K extends keyof ResolvedSchema<TSchema>>(path: K, value: ResolvedSchema<TSchema>[K]) {
+    const config = options.schema[path];
+    try {
+      parse(value, config); // Runtime validation of the value
+    } catch (e) {
+      if (isCustomConfig(config)) {
+        throw e;
+      }
+      if (isStringEnumConfig(config)) {
+        throw new Error(`Expected "${path}=${value}" to be one of: ${config.enum.join(", ")}`);
+      } else if (isNumberConfig(config) && Number.isFinite(value)) {
+        if (typeof config.min === "number" && value < config.min) {
+          throw new Error(`Expected "${path}=${value}" to be greater than ${config.min}`);
+        }
+        if (typeof config.max === "number" && value > config.max) {
+          throw new Error(`Expected "${path}=${value}" to be lower than ${config.max}`);
+        }
+      }
+
+      throw new Error(`Expected "${path}=${value}" to be a "${config.type}"`);
+    }
     if (getWindowValue(path) === value) {
       injected.storage.removeItem(`${injected.namespace}.${path}`);
     } else {
@@ -108,45 +100,17 @@ export function createConfig<TConfig>(options: ConfigOptions<TConfig>) {
   /**
    * Get all consolidate config values.
    */
-  function getAllConfig(): TConfig {
-    const windowKeys = Object.keys(get(window, injected.namespace, {})) as any;
-    const defaultKeys = Object.keys(options.defaultConfig || {});
-    const configKeys = Object.keys(injected.types);
-
-    return uniq([...configKeys, ...windowKeys, ...defaultKeys]).reduce(
+  function getAllConfig(): ResolvedSchema<TSchema> {
+    return Object.keys(options.schema).reduce(
       (mem, key) => ({ ...mem, [key]: getConfig(key) }),
-      {},
+      {} as ResolvedSchema<TSchema>,
     );
   }
 
+  // Validate all config from `window.{namespace}`
+
   return {
-    Config(props: ConfigProps<TConfig>) {
-      return (
-        <ConfigBase
-          getConfig={getConfig}
-          getAllConfig={getAllConfig}
-          getStorageValue={getStorageValue}
-          getWindowValue={getWindowValue}
-          setConfig={setConfig}
-          {...injected}
-          {...props}
-        />
-      );
-    },
-    AdminConfig(props: AdminConfigProps<TConfig>) {
-      return (
-        <AdminConfigBase
-          getConfig={getConfig}
-          getAllConfig={getAllConfig}
-          getStorageValue={getStorageValue}
-          getWindowValue={getWindowValue}
-          setConfig={setConfig}
-          {...injected}
-          {...props}
-        />
-      );
-    },
-    useConfig: useConfigBase<TConfig>({
+    useConfig: createUseConfig<TSchema>({
       getConfig,
       getAllConfig,
       getStorageValue,
@@ -154,7 +118,7 @@ export function createConfig<TConfig>(options: ConfigOptions<TConfig>) {
       setConfig,
       ...injected,
     }),
-    useAdminConfig: useAdminConfig<TConfig>({
+    useAdminConfig: createUseAdminConfig<TSchema>({
       getConfig,
       getAllConfig,
       getStorageValue,
