@@ -84,12 +84,12 @@ export type ResolvedConfigValue<TValue extends Config> = TValue extends StringEn
   ? ReturnType<TValue["parser"]>
   : never;
 
-export const isStringConfig = (value: Config): value is StringConfig => value.type === "string";
-export const isStringEnumConfig = (value: Config): value is StringEnumValue =>
-  value.type === "string" && Array.isArray(value.enum);
-export const isNumberConfig = (value: Config): value is NumberConfig => value.type === "number";
-export const isBooleanConfig = (value: Config): value is BooleanConfig => value.type === "boolean";
-export const isCustomConfig = (value: Config): value is CustomConfig => value.type === "custom";
+export const isStringConfig = (config: Config): config is StringConfig => config.type === "string";
+export const isStringEnumConfig = (config: Config): config is StringEnumValue =>
+  config.type === "string" && Array.isArray(config.enum);
+export const isNumberConfig = (config: Config): config is NumberConfig => config.type === "number";
+export const isBooleanConfig = (config: Config): config is BooleanConfig => config.type === "boolean";
+export const isCustomConfig = (config: Config): config is CustomConfig => config.type === "custom";
 
 export interface InjectedProps<TSchema extends Record<string, Config>, TConfig = ResolvedSchema<TSchema>> {
   namespace: string;
@@ -102,3 +102,21 @@ export interface InjectedProps<TSchema extends Record<string, Config>, TConfig =
   getWindowValue: <K extends keyof TSchema>(path: K) => ResolvedConfigValue<TSchema[K]> | null;
   getStorageValue: <K extends keyof TSchema>(path: K) => ResolvedConfigValue<TSchema[K]> | null;
 }
+
+export type AdminField<TSchema extends Record<string, Config>, TPath extends keyof TSchema> = TSchema[TPath] & {
+  path: TPath;
+  windowValue: ResolvedConfigValue<TSchema[TPath]> | null;
+  storageValue: ResolvedConfigValue<TSchema[TPath]> | null;
+  isFromStorage: boolean;
+  value: ResolvedConfigValue<TSchema[TPath]>;
+  set: (value: ResolvedConfigValue<TSchema[TPath]>) => void;
+};
+
+type Lookup<T, K> = K extends keyof T ? T[K] : never;
+type TupleFromInterface<T, K extends Array<keyof T> = Array<keyof T>> = { [I in keyof K]: Lookup<T, K[I]> };
+
+export type AdminFields<TSchema extends Record<string, Config>> = TupleFromInterface<
+  {
+    [key in keyof TSchema]: AdminField<TSchema, key>;
+  }
+>;

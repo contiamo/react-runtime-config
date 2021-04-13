@@ -16,7 +16,7 @@ function parseString(value: unknown): string {
 }
 
 function parseNumber(value: unknown): number {
-  if (typeof value === "number" && !Number.isFinite(value)) {
+  if (typeof value === "number" && Number.isFinite(value)) {
     return value;
   }
   if (typeof value === "string") {

@@ -5,7 +5,7 @@ import { Mock } from "ts-mockery";
 
 import createConfig from "./";
 import { renderHook, act } from "@testing-library/react-hooks";
-import { Config } from "./types";
+import { ConfigOptions } from "./types";
 
 // Localstorage mock
 let store = {};
@@ -50,7 +50,7 @@ describe("localStorage mock", () => {
 
 describe("react-runtime-config", () => {
   const namespace = "test";
-  const createConfigWithDefaults = (schema: Record<string, Config> = {}) =>
+  const createConfigWithDefaults = (config: Pick<Partial<ConfigOptions<any>>, "localOverride" | "namespace"> = {}) =>
     createConfig({
       namespace,
       storage,
@@ -81,8 +81,15 @@ describe("react-runtime-config", () => {
             throw new Error("Monitoring link invalid!");
           },
         },
-        ...schema,
+        isLive: {
+          type: "boolean",
+          default: false,
+        },
+        isAwesome: {
+          type: "boolean",
+        },
       },
+      ...config,
     });
 
   beforeEach(() => {
@@ -93,11 +100,19 @@ describe("react-runtime-config", () => {
         url: "http://localhost:5000",
         displayName: "Monitoring",
       },
+      isAwesome: true,
     });
   });
   afterEach(() => {
     act(() => storage.clear());
     delete (window as any)[namespace];
+  });
+
+  it("should throw if a window value don't fit the schema", () => {
+    set(window, `${namespace}.color`, "red");
+    expect(() => createConfigWithDefaults()).toThrowErrorMatchingInlineSnapshot(
+      `"Config key \\"color\\" not valid: red not part of [\\"blue\\", \\"green\\", \\"pink\\"]"`,
+    );
   });
 
   describe("getConfig", () => {
@@ -124,10 +139,22 @@ describe("react-runtime-config", () => {
       expect(getConfig("color")).toBe("pink");
     });
 
-    it("should return the localstorage value (storage set by the lib", () => {
+    it("should return the localstorage value (storage set after)", () => {
+      const { getConfig } = createConfigWithDefaults();
+      storage.setItem(`${namespace}.color`, "pink");
+      expect(getConfig("color")).toBe("pink");
+    });
+
+    it("should return the localstorage value (with setConfig)", () => {
       const { getConfig, setConfig } = createConfigWithDefaults();
       setConfig("color", "green");
       expect(getConfig("color")).toBe("green");
+    });
+
+    it("should ignore the storage value (localOverride=false)", () => {
+      const { getConfig, setConfig } = createConfigWithDefaults({ localOverride: false });
+      setConfig("color", "green");
+      expect(getConfig("color")).toBe("blue");
     });
 
     it("should throw on corrupted window value", () => {
@@ -152,6 +179,8 @@ describe("react-runtime-config", () => {
         Object {
           "backend": "http://localhost",
           "color": "green",
+          "isAwesome": true,
+          "isLive": false,
           "monitoringLink": Object {
             "displayName": "Monitoring",
             "url": "http://localhost:5000",
@@ -163,11 +192,50 @@ describe("react-runtime-config", () => {
   });
 
   describe("setConfig", () => {
-    it("should set a value", () => {
+    it("should set a value (enum)", () => {
       const { getConfig, setConfig } = createConfigWithDefaults();
       expect(getConfig("color")).toBe("blue");
       setConfig("color", "pink");
       expect(getConfig("color")).toBe("pink");
+    });
+
+    it("should set a value (string)", () => {
+      const { getConfig, setConfig } = createConfigWithDefaults();
+      expect(getConfig("backend")).toBe("http://localhost");
+      setConfig("backend", "https://local");
+      expect(getConfig("backend")).toBe("https://local");
+    });
+
+    it("should set a value (number)", () => {
+      const { getConfig, setConfig } = createConfigWithDefaults();
+      expect(getConfig("port")).toBe(8000);
+      setConfig("port", 42);
+      expect(getConfig("port")).toBe(42);
+    });
+
+    it("should set a value (boolean=true)", () => {
+      const { getConfig, setConfig } = createConfigWithDefaults();
+      expect(getConfig("isLive")).toBe(false);
+      setConfig("isLive", true);
+      expect(getConfig("isLive")).toBe(true);
+    });
+
+    it("should set a value (boolean=false)", () => {
+      const { getConfig, setConfig } = createConfigWithDefaults();
+      expect(getConfig("isAwesome")).toBe(true);
+      setConfig("isAwesome", false);
+      expect(getConfig("isAwesome")).toBe(false);
+    });
+
+    it("should remove the localstorage value if same as the window one", () => {
+      const { setConfig } = createConfigWithDefaults();
+      // Add a custom value
+      setConfig("isAwesome", false);
+      expect(storage.getItem("test.isAwesome")).toBe("false");
+
+      // Set back the default value
+      setConfig("isAwesome", true);
+      expect(storage.getItem("test.isAwesome")).toBe(null);
     });
 
     it("should throw if the type is not respected", () => {
@@ -231,6 +299,8 @@ describe("react-runtime-config", () => {
         Object {
           "backend": "http://localhost",
           "color": "green",
+          "isAwesome": true,
+          "isLive": false,
           "monitoringLink": Object {
             "displayName": "Monitoring",
             "url": "http://localhost:5000",
@@ -242,6 +312,12 @@ describe("react-runtime-config", () => {
   });
 
   describe("useAdminConfig", () => {
+    it("should send back the namespace", () => {
+      const { useAdminConfig } = createConfigWithDefaults();
+      const { result } = renderHook(useAdminConfig);
+      expect(result.current.namespace).toBe("test");
+    });
+
     it("should have all the metadata about a field", () => {
       const { useAdminConfig } = createConfigWithDefaults();
       storage.setItem(`${namespace}.color`, "pink");
@@ -265,6 +341,45 @@ describe("react-runtime-config", () => {
           "windowValue": "blue",
         }
       `);
+    });
+
+    it("should be able to set some fields or reset everything", () => {
+      const { useAdminConfig } = createConfigWithDefaults();
+      const { result } = renderHook(useAdminConfig);
+      // Set some values
+      result.current.fields.forEach(field => {
+        if (field.path === "backend") {
+          act(() => field.set("http://my-app.com"));
+        }
+        if (field.type === "number") {
+          act(() => field.set(42));
+        }
+      });
+
+      // Check the resulting state
+      result.current.fields.forEach(field => {
+        if (field.path === "backend") {
+          expect(field.windowValue).toBe("http://localhost");
+          expect(field.value).toBe("http://my-app.com");
+          expect(field.storageValue).toBe("http://my-app.com");
+          expect(field.isFromStorage).toBe(true);
+        } else if (field.type === "number") {
+          expect(field.storageValue).toBe(42);
+          expect(field.value).toBe(42);
+          expect(field.isFromStorage).toBe(true);
+        } else {
+          expect(field.isFromStorage).toBe(false);
+        }
+      });
+
+      // Reset the store
+      act(() => result.current.reset());
+
+      // Check if everything is reset
+      result.current.fields.forEach(field => {
+        expect(field.isFromStorage).toBe(false);
+        expect(field.storageValue).toBe(null);
+      });
     });
   });
 });

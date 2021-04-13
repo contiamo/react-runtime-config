@@ -13,12 +13,10 @@ import { createUseAdminConfig } from "./createUseAdminConfig";
 import { createUseConfig } from "./createUseConfig";
 
 export function createConfig<TSchema extends Record<string, Config>>(options: ConfigOptions<TSchema>) {
-  const { namespace } = options;
   const injected: Pick<InjectedProps<TSchema>, keyof ConfigOptions<TSchema>> = {
     storage: window.localStorage,
     localOverride: true,
     ...options,
-    namespace: namespace.slice(-1) === "." ? namespace.slice(0, -1) : namespace,
   };
 
   /**
@@ -108,6 +106,7 @@ export function createConfig<TSchema extends Record<string, Config>>(options: Co
   }
 
   // Validate all config from `window.{namespace}`
+  getAllConfig();
 
   return {
     useConfig: createUseConfig<TSchema>({

@@ -78,37 +78,46 @@ This configuration is then easily read by the simple React hook that this librar
 import createConfig from "react-runtime-config";
 
 /**
- * All config values that need to be set in window.
- * Errors will be thrown if these values do not exist.
- */
-interface MandatoryConfig {
-  backendUrl: string;
-}
-
-// All optional config values.
-const defaultConfig = {
-  color: "pink",
-  myFeatureFlag: false,
-};
-
-export type ConfigType = MandatoryConfig & typeof defaultConfig;
-
-/**
  * `useConfig` and `useAdminConfig` are now React hooks that you can use in your app.
  *
  * `useConfig` provides config getter & setter, `useAdminConfig` provides data in order
- * to visualize your config map with ease. More on this further
- * down.
+ * to visualize your config map with ease. More on this further down.
  */
-
-export const { useConfig, useAdminConfig } = createConfig<ConfigType>({
+export const { useConfig, useAdminConfig } = createConfig({
   namespace: "MY_APP_CONFIG",
-  defaultConfig,
-  // Types are totally optionals since they are just metadata for the `useAdminConfig`
-  types: {
-    myFeatureFlag: "boolean",
-    color: ["pink", "red", "blue"], // Enum type
-    backendUrl: "string",
+  schema: {
+    color: {
+      type: "string",
+      enum: ["blue" as const, "green" as const, "pink" as const], // `as const` is required to have nice autocompletion
+      description: "Main color of the application",
+    },
+    backend: {
+      type: "string",
+      description: "Backend url", // config without `default` need to be provided into `window.MY_APP_CONFIG`
+    },
+    port: {
+      type: "number", // This schema can be retrieved after in `useAdminConfig().fields`
+      description: "Backend port",
+      min: 1,
+      max: 65535,
+      default: 8000, // config with `default` don't have to be set on `window.MY_APP_CONFIG`
+    },
+    monitoringLink: {
+      type: "custom",
+      description: "Link of the monitoring",
+      parser: value => {
+        if (typeof value === "object" && typeof value.url === "string" && typeof value.displayName === "string") {
+          // The type will be infered from the return type
+          return { url: value.url as string, displayName: value.displayName as string };
+        }
+        // This error will be shown if the `window.MY_APP_CONFIG.monitoringLink` can't be parsed or if we `setConfig` an unvalid value
+        throw new Error("Monitoring link invalid!");
+      },
+    },
+    isLive: {
+      type: "boolean",
+      default: false,
+    },
   },
 });
 ```
@@ -135,35 +144,7 @@ The priority of config values is as follows:
 
 - `localStorage.getItem("MY_APP_CONFIG.color")`
 - `window.MY_APP_CONFIG.color`
-- `defaultConfig.color`
-
-#### Options
-
-```ts
-interface ConfigOptions {
-  namespace: string;
-  /**
-   * Config default values
-   */
-  defaultConfig?: Partial<TConfig>;
-  /**
-   * Storage adapter
-   *
-   * @default window.localStorage
-   */
-  storage?: StorageAdapter;
-  /**
-   * Permit to override any config values in storage
-   *
-   * @default true
-   */
-  localOverride?: boolean;
-  /**
-   * Runtime types mapping (metadata for AdminConfig)
-   */
-  types?: { [key in keyof TConfig]?: RuntimeType };
-}
-```
+- `schema.color.default`
 
 ## Create an Administration Page
 
@@ -177,26 +158,16 @@ import { Page, Card, Input, Button, Checkbox } from "@operational/components";
 import { useAdminConfig } from "./components/Config";
 
 export default () => {
-  const { fields, setConfig, reset } = useAdminConfig();
+  const { fields, reset } = useAdminConfig();
 
   return (
     <Page title="Configuration">
       <Card title="Configuration">
         {fields.map(field =>
           field.type === "boolean" ? (
-            <Checkbox
-              key={field.path}
-              value={field.value}
-              label={field.path}
-              onChange={val => setConfig(field.path, val)}
-            />
+            <Checkbox key={field.path} value={field.value} label={field.path} onChange={field.set} />
           ) : (
-            <Input
-              key={field.path}
-              value={field.value}
-              label={field.path}
-              onChange={val => setConfig(field.path, val)}
-            />
+            <Input key={field.path} value={field.value} label={field.path} onChange={field.set} />
           ),
         )}
         <Button onClick={reset}>Reset config</Button>
@@ -207,20 +178,6 @@ export default () => {
 ```
 
 You have also access to `field.windowValue` and `field.storageValue` if you want implement more advanced UX on this page.
-
-## Legacy React components
-
-If for any reason, you can't (or don't want) to use react hooks, `createConfig` also expose a legacy `Config` and `AdminConfig` components, thoses components have the same API than the hooks but with a render props pattern.
-
-Example:
-
-```tsx
-// components/MyComponents.tsx
-import react from "React";
-import { Config } from "./Config"; // need to be exported!
-
-const MyComponent = () => <Config>{({ getConfig }) => <h1 style={{ color: getConfig("color") }}>My title</h1>}</Config>;
-```
 
 ## Moar Power (if needed)
 

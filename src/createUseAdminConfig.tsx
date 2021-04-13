@@ -1,4 +1,4 @@
-import { InjectedProps, Config, ResolvedConfigValue } from "./types";
+import { InjectedProps, Config, ResolvedConfigValue, AdminFields } from "./types";
 import { useCallback, useMemo } from "react";
 import { useWatchLocalstorageEvents } from "./utils";
 
@@ -17,7 +17,7 @@ export function createUseAdminConfig<T extends Record<string, Config>>(props: In
         isFromStorage: props.getStorageValue(path) !== null,
         value: props.getConfig(path),
         set: (value: ResolvedConfigValue<T[typeof path]>) => props.setConfig(path, value),
-      }));
+      })) as AdminFields<T>;
     }, [localstorageDep, configKeys]);
 
     const reset = useCallback(() => {
@@ -44,40 +44,3 @@ export function createUseAdminConfig<T extends Record<string, Config>>(props: In
     };
   };
 }
-
-// export type Fields<T> = Array<TextField<T> | NumberField<T> | BooleanField<T>>;
-
-// type StorageValue = string | boolean | null;
-
-// type TextField<T, K extends keyof T = Extract<keyof T, string>> = {
-//   path: K;
-//   defaultValue: string | null;
-//   windowValue: any;
-//   storageValue: StorageValue;
-//   value: string;
-//   isFromStorage: boolean;
-//   type: "string" | string[];
-//   setValue: (value: string) => void;
-// };
-
-// type NumberField<T, K extends keyof T = Extract<keyof T, string>> = {
-//   path: K;
-//   defaultValue: number | null;
-//   windowValue: any;
-//   storageValue: StorageValue;
-//   value: number;
-//   isFromStorage: boolean;
-//   type: "number";
-//   setValue: (value: number) => void;
-// };
-
-// type BooleanField<T, K extends keyof T = Extract<keyof T, string>> = {
-//   path: K;
-//   defaultValue: boolean | null;
-//   windowValue: any;
-//   storageValue: StorageValue;
-//   value: boolean;
-//   isFromStorage: boolean;
-//   type: "boolean";
-//   setValue: (value: boolean) => void;
-// };
