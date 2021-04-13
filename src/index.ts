@@ -8,9 +8,37 @@ import {
   isStringEnumConfig,
   isNumberConfig,
   isCustomConfig,
+  isBooleanConfig,
+  isStringConfig,
+  StringConfig,
+  NumberConfig,
+  BooleanConfig,
+  CustomConfig,
+  AdminField,
+  AdminFields,
 } from "./types";
 import { createUseAdminConfig } from "./createUseAdminConfig";
 import { createUseConfig } from "./createUseConfig";
+
+export {
+  // Options
+  ConfigOptions,
+  // Configs
+  Config,
+  StringConfig,
+  NumberConfig,
+  BooleanConfig,
+  CustomConfig,
+  // Typeguards
+  isStringEnumConfig,
+  isNumberConfig,
+  isCustomConfig,
+  isBooleanConfig,
+  isStringConfig,
+  // useConfigAdmin.fields
+  AdminField,
+  AdminFields,
+};
 
 export function createConfig<TSchema extends Record<string, Config>>(options: ConfigOptions<TSchema>) {
   const injected: Pick<InjectedProps<TSchema>, keyof ConfigOptions<TSchema>> = {

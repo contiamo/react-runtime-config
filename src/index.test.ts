@@ -1,9 +1,11 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import get from "lodash/get";
 import set from "lodash/set";
 import unset from "lodash/unset";
 import { Mock } from "ts-mockery";
 
-import createConfig from "./";
+import createConfig from ".";
 import { renderHook, act } from "@testing-library/react-hooks";
 import { ConfigOptions } from "./types";
 
@@ -50,7 +52,7 @@ describe("localStorage mock", () => {
 
 describe("react-runtime-config", () => {
   const namespace = "test";
-  const createConfigWithDefaults = (config: Pick<Partial<ConfigOptions<any>>, "localOverride" | "namespace"> = {}) =>
+  const createConfigWithDefaults = (config: Pick<Partial<ConfigOptions<never>>, "localOverride" | "namespace"> = {}) =>
     createConfig({
       namespace,
       storage,
@@ -76,7 +78,10 @@ describe("react-runtime-config", () => {
           description: "Link of the monitoring",
           parser: value => {
             if (typeof value === "object" && typeof value.url === "string" && typeof value.displayName === "string") {
-              return { url: value.url as string, displayName: value.displayName as string };
+              return {
+                url: value.url as string,
+                displayName: value.displayName as string,
+              };
             }
             throw new Error("Monitoring link invalid!");
           },
@@ -152,7 +157,9 @@ describe("react-runtime-config", () => {
     });
 
     it("should ignore the storage value (localOverride=false)", () => {
-      const { getConfig, setConfig } = createConfigWithDefaults({ localOverride: false });
+      const { getConfig, setConfig } = createConfigWithDefaults({
+        localOverride: false,
+      });
       setConfig("color", "green");
       expect(getConfig("color")).toBe("blue");
     });

@@ -1,15 +1,14 @@
 {
-  "exclude": ["node_modules"],
-  "include": ["src"],
+  "include": ["src/**/*"],
   "compilerOptions": {
+    "outDir": "lib",
     "skipLibCheck": true,
     "target": "es5",
     "module": "esnext",
-    "lib": ["es2015", "dom", "es2016.array.include", "es2017.object"],
+    "lib": ["dom", "es2017"],
     "jsx": "react",
     "declaration": true,
     "declarationMap": true,
-    "rootDir": "./src",
     "downlevelIteration": true,
     "strict": true,
     "noUnusedLocals": true,

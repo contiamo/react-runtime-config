@@ -28,21 +28,21 @@ export interface ConfigOptions<TSchema extends Record<string, Config>> {
 
 export type Config = StringConfig | NumberConfig | BooleanConfig | CustomConfig;
 
-interface StringConfig {
+export interface StringConfig {
   type: "string";
   enum?: string[];
   default?: string;
   description?: string;
 }
 
-interface StringEnumValue extends StringConfig {
+export interface StringEnumValue extends StringConfig {
   /**
    * List of allowed values
    */
   enum: string[];
 }
 
-interface NumberConfig {
+export interface NumberConfig {
   type: "number";
   min?: number;
   max?: number;
@@ -50,13 +50,13 @@ interface NumberConfig {
   description?: string;
 }
 
-interface BooleanConfig {
+export interface BooleanConfig {
   type: "boolean";
   default?: boolean;
   description?: string;
 }
 
-interface CustomConfig<T = unknown> {
+export interface CustomConfig<T = unknown> {
   type: "custom";
   default?: T;
   description?: string;
@@ -113,7 +113,9 @@ export type AdminField<TSchema extends Record<string, Config>, TPath extends key
 };
 
 type Lookup<T, K> = K extends keyof T ? T[K] : never;
-type TupleFromInterface<T, K extends Array<keyof T> = Array<keyof T>> = { [I in keyof K]: Lookup<T, K[I]> };
+type TupleFromInterface<T, K extends Array<keyof T> = Array<keyof T>> = {
+  [I in keyof K]: Lookup<T, K[I]>;
+};
 
 export type AdminFields<TSchema extends Record<string, Config>> = TupleFromInterface<
   {
