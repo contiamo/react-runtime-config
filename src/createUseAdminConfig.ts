@@ -26,6 +26,7 @@ export function createUseAdminConfig<T extends Record<string, Config>, TNamespac
       configKeys.forEach(path => {
         props.storage.removeItem(`${props.namespace}.${path}`);
       });
+      window.dispatchEvent(new Event("storage"));
     }, [configKeys, props.namespace]);
 
     return {
