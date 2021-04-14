@@ -11,14 +11,15 @@ export function createUseAdminConfig<T extends Record<string, Config>, TNamespac
     const configKeys: (keyof T)[] = useMemo(() => Object.keys(props.schema), [props.schema]);
 
     const fields = useMemo(() => {
-      return configKeys.map(path => ({
-        path,
-        ...props.schema[path],
-        windowValue: props.getWindowValue(path),
-        storageValue: props.getStorageValue(path),
-        isFromStorage: props.getStorageValue(path) !== null,
-        value: props.getConfig(path),
-        set: (value: ResolvedConfigValue<T[typeof path]>) => props.setConfig(path, value),
+      return configKeys.map(key => ({
+        key,
+        path: `${props.namespace}.${key}`,
+        ...props.schema[key],
+        windowValue: props.getWindowValue(key),
+        storageValue: props.getStorageValue(key),
+        isFromStorage: props.getStorageValue(key) !== null,
+        value: props.getConfig(key),
+        set: (value: ResolvedConfigValue<T[typeof key]>) => props.setConfig(key, value),
       })) as AdminFields<T>;
     }, [localstorageDep, configKeys]);
 

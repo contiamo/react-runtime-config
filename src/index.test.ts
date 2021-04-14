@@ -355,7 +355,7 @@ describe("react-runtime-config", () => {
       const { useAdminConfig } = createConfigWithDefaults();
       storage.setItem(`${namespace}.color`, "pink");
       const { result } = renderHook(useAdminConfig);
-      const color = result.current.fields.find(({ path }) => path === "color");
+      const color = result.current.fields.find(({ key }) => key === "color");
 
       expect(color).toMatchInlineSnapshot(`
         Object {
@@ -366,7 +366,8 @@ describe("react-runtime-config", () => {
             "pink",
           ],
           "isFromStorage": true,
-          "path": "color",
+          "key": "color",
+          "path": "test.color",
           "set": [Function],
           "storageValue": "pink",
           "type": "string",
@@ -381,7 +382,7 @@ describe("react-runtime-config", () => {
       const { result } = renderHook(useAdminConfig);
       // Set some values
       result.current.fields.forEach(field => {
-        if (field.path === "backend") {
+        if (field.key === "backend") {
           act(() => field.set("http://my-app.com"));
         }
         if (field.type === "number") {
@@ -391,7 +392,7 @@ describe("react-runtime-config", () => {
 
       // Check the resulting state
       result.current.fields.forEach(field => {
-        if (field.path === "backend") {
+        if (field.key === "backend") {
           expect(field.windowValue).toBe("http://localhost");
           expect(field.value).toBe("http://my-app.com");
           expect(field.storageValue).toBe("http://my-app.com");

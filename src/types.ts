@@ -121,21 +121,43 @@ export interface InjectedProps<
   schema: TSchema;
   storage: Storage;
   localOverride: boolean;
-  getConfig: <K extends keyof TSchema>(path: K) => ResolvedConfigValue<TSchema[K]>;
-  setConfig: <K extends keyof TSchema>(path: K, value: ResolvedConfigValue<TSchema[K]>) => void;
+  getConfig: <K extends keyof TSchema>(key: K) => ResolvedConfigValue<TSchema[K]>;
+  setConfig: <K extends keyof TSchema>(key: K, value: ResolvedConfigValue<TSchema[K]>) => void;
   getAllConfig: () => TConfig;
-  getWindowValue: <K extends keyof TSchema>(path: K) => ResolvedConfigValue<TSchema[K]> | null;
-  getStorageValue: <K extends keyof TSchema>(path: K) => ResolvedConfigValue<TSchema[K]> | null;
+  getWindowValue: <K extends keyof TSchema>(key: K) => ResolvedConfigValue<TSchema[K]> | null;
+  getStorageValue: <K extends keyof TSchema>(key: K) => ResolvedConfigValue<TSchema[K]> | null;
 }
 
 // useAdminConfig types
-export type AdminField<TSchema extends Record<string, Config>, TPath extends keyof TSchema> = TSchema[TPath] & {
-  path: TPath;
-  windowValue: ResolvedConfigValue<TSchema[TPath]> | null;
-  storageValue: ResolvedConfigValue<TSchema[TPath]> | null;
+export type AdminField<TSchema extends Record<string, Config>, TKey extends keyof TSchema> = TSchema[TKey] & {
+  /**
+   * Schema key of the config
+   */
+  key: TKey;
+  /**
+   * Full path of the config (with `namespace`)
+   */
+  path: string;
+  /**
+   * Value stored in `window.{path}`
+   */
+  windowValue: ResolvedConfigValue<TSchema[TKey]> | null;
+  /**
+   * Value stored in `storage.getItem({path})`
+   */
+  storageValue: ResolvedConfigValue<TSchema[TKey]> | null;
+  /**
+   * True if a value is store on the localstorage
+   */
   isFromStorage: boolean;
-  value: ResolvedConfigValue<TSchema[TPath]>;
-  set: (value: ResolvedConfigValue<TSchema[TPath]>) => void;
+  /**
+   * Computed value from storage, window, schema[key].default
+   */
+  value: ResolvedConfigValue<TSchema[TKey]>;
+  /**
+   * Value setter
+   */
+  set: (value: ResolvedConfigValue<TSchema[TKey]>) => void;
 };
 
 type Lookup<T, K> = K extends keyof T ? T[K] : never;
@@ -151,6 +173,7 @@ export type AdminFields<TSchema extends Record<string, Config>> = TupleFromInter
 
 // useAdminConfig generic types
 type AdminProps<T, U = T> = {
+  key: string;
   path: string;
   windowValue: T | null;
   storageValue: T | null;
