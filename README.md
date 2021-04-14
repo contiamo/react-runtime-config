@@ -199,6 +199,51 @@ export default () => {
 
 You have also access to `field.windowValue` and `field.storageValue` if you want implement more advanced UX on this page.
 
+## Multiconfiguration admin page
+
+As soon as you have more than one configuration in your project, creating an administration page than merge everything is a nice to have. Of course, you will want a kind of `ConfigSection` component that take the result of any `useAdminConfig()` (so `field`, `reset` and `namespace` as props).
+
+Spoiler alert, having this kind of component type safe can be tricky, indeed you can try use `ReturnType<typeof useFirstAdminConfig> | ReturnType<typeof useSecondAdminConfig>` as props but typescript will fight you (`Array.map` will tell you that the signature are not compatible).
+
+Anyway, long story short, this library provide you an easy way to with this: `GenericAdminFields` type. This type is compatible with every configuration and will provide you a nice framework to create an amazing UX.
+
+```tsx
+import { GenericAdminFields } from "react-runtime-config";
+
+export interface ConfigSectionProps {
+  fields: GenericAdminFields;
+  namespace: string;
+  reset: () => void;
+}
+
+export const ConfigSection = ({ namespace, fields }: ConfigSectionProps) => {
+  return (
+    <Section title={namespace}>
+      {fields.map(f => {
+        if (f.type === "string" && !f.enum) {
+          return <Input key={f.path} type="text" label={f.path} onChange={f.set} value={f.value} />;
+        }
+        if (f.type === "number") {
+          return <Input key={f.path} type="number" label={f.path} onChange={f.set} value={f.value} />;
+        }
+        if (f.type === "boolean") {
+          return <Checkbox key={f.path} label={f.path} onChange={f.set} value={f.value} />;
+        }
+        if (f.type === "string" && f.enum) {
+          // `f.set` can take `any` but you still have runtime validation if a wrong value is provided.
+          return <Select options={f.enum} value={f.value} onChange={f.set} />;
+        }
+        if (f.type === "custom") {
+          /* Add some special handler/typeguard to retrieve the safety */
+        }
+      })}
+    </Section>
+  );
+};
+```
+
+PS: If you have a better idea/pattern, please open an issue to tell me about it 😃
+
 ## Moar Power (if needed)
 
 We also expose from `createConfig` a simple `getConfig`, `getAllConfig` and `setConfig`. These functions can be used standalone and do not require use of the `useConfig` react hooks. This can be useful for accessing or mutating configuration values in component lifecycle hooks, or anywhere else outside of render.

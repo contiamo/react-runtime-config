@@ -55,7 +55,7 @@ export interface StringConfig {
   description?: string;
 }
 
-export interface StringEnumValue extends StringConfig {
+export interface StringEnumConfig extends StringConfig {
   /**
    * List of allowed values
    */
@@ -92,7 +92,7 @@ export type ResolvedSchema<TSchema extends Record<string, Config>> = {
   [key in keyof TSchema]: ResolvedConfigValue<TSchema[key]>;
 };
 
-export type ResolvedConfigValue<TValue extends Config> = TValue extends StringEnumValue
+export type ResolvedConfigValue<TValue extends Config> = TValue extends StringEnumConfig
   ? TValue["enum"][-1]
   : TValue extends StringConfig
   ? string
@@ -105,7 +105,7 @@ export type ResolvedConfigValue<TValue extends Config> = TValue extends StringEn
   : never;
 
 export const isStringConfig = (config: Config): config is StringConfig => config.type === "string";
-export const isStringEnumConfig = (config: Config): config is StringEnumValue =>
+export const isStringEnumConfig = (config: Config): config is StringEnumConfig =>
   config.type === "string" && Array.isArray(config.enum);
 export const isNumberConfig = (config: Config): config is NumberConfig => config.type === "number";
 export const isBooleanConfig = (config: Config): config is BooleanConfig => config.type === "boolean";
@@ -147,6 +147,34 @@ export type AdminFields<TSchema extends Record<string, Config>> = TupleFromInter
   {
     [key in keyof TSchema]: AdminField<TSchema, key>;
   }
+>;
+
+// useAdminConfig generic types
+type AdminProps<T, U = T> = {
+  path: string;
+  windowValue: T | null;
+  storageValue: T | null;
+  isFromStorage: boolean;
+  value: T;
+  set: (value: U) => void;
+};
+
+/**
+ * `useAdminConfig.fields` in a generic version.
+ *
+ * This should be used if you are implement a generic component
+ * that consume any `fields` as prop.
+ *
+ * Note: "custom" type and "string" with enum are defined as `any` to be
+ * compatible with any schemas. You will need to validate them in your
+ * implementation to retrieve type safety.
+ */
+export type GenericAdminFields = Array<
+  | (StringConfig & AdminProps<string>)
+  | (NumberConfig & AdminProps<number>)
+  | (BooleanConfig & AdminProps<boolean>)
+  | (StringEnumConfig & AdminProps<string, any>)
+  | (CustomConfig<any> & AdminProps<any>)
 >;
 
 // useConfig types

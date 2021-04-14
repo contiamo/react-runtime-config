@@ -11,11 +11,13 @@ import {
   isBooleanConfig,
   isStringConfig,
   StringConfig,
+  StringEnumConfig,
   NumberConfig,
   BooleanConfig,
   CustomConfig,
   AdminField,
   AdminFields,
+  GenericAdminFields,
   NamespacedUseConfigReturnType,
 } from "./types";
 import { createUseAdminConfig } from "./createUseAdminConfig";
@@ -27,6 +29,7 @@ export {
   // Configs
   Config,
   StringConfig,
+  StringEnumConfig,
   NumberConfig,
   BooleanConfig,
   CustomConfig,
@@ -39,6 +42,7 @@ export {
   // useConfigAdmin.fields
   AdminField,
   AdminFields,
+  GenericAdminFields,
 };
 
 export function createConfig<TSchema extends Record<string, Config>, TNamespace extends string = "">(
