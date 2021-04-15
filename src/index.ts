@@ -129,7 +129,7 @@ export function createConfig<TSchema extends Record<string, Config>, TNamespace 
 
       throw new Error(`Expected "${path}=${value}" to be a "${config.type}"`);
     }
-    if (getWindowValue(path) === value) {
+    if (getWindowValue(path) === value || config.default === value) {
       injected.storage.removeItem(`${injected.namespace}.${path}`);
     } else {
       injected.storage.setItem(`${injected.namespace}.${path}`, String(value));

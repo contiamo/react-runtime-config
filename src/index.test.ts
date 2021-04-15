@@ -247,6 +247,17 @@ describe("react-runtime-config", () => {
       expect(storage.getItem("test.isAwesome")).toBe(null);
     });
 
+    it("should remove the localstorage value if same as the default one", () => {
+      const { setConfig } = createConfigWithDefaults();
+      // Add a custom value
+      setConfig("isLive", true);
+      expect(storage.getItem("test.isLive")).toBe("true");
+
+      // Set back the default value
+      setConfig("isLive", false);
+      expect(storage.getItem("test.isLive")).toBe(null);
+    });
+
     it("should throw if the type is not respected", () => {
       const { setConfig } = createConfigWithDefaults();
       expect(() => setConfig("port", "yolo" as any)).toThrowErrorMatchingInlineSnapshot(
