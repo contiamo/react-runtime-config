@@ -131,9 +131,9 @@ The priority of config values is as follows:
 - `window.MY_APP_CONFIG.color`
 - `schema.color.default`
 
-## Namespaced you `useConfig` hook
+## Namespaced `useConfig` hook
 
-In a large application, you may have multiple instance of `useConfig` from different `createConfig`. So far every `useConfig` will return a set of `getConfig`, `setConfig` and `getAllConfig`.
+In a large application, you may have multiple instances of `useConfig` from different `createConfig`. So far every `useConfig` will return a set of `getConfig`, `setConfig` and `getAllConfig`.
 
 To avoid any confusion or having to manually rename every usage of `useConfig` in a large application, you can use the `configNamespace` options.
 
@@ -201,7 +201,7 @@ You have also access to `field.windowValue` and `field.storageValue` if you want
 
 ## Multiconfiguration admin page
 
-As soon as you have more than one configuration in your project, creating an administration page than merge everything is a nice to have. Of course, you will want a kind of `ConfigSection` component that take the result of any `useAdminConfig()` (so `field`, `reset` and `namespace` as props).
+As soon as you have more than one configuration in your project, you might want to merge all thoses configurations in one administration page. Of course, you will want a kind of `ConfigSection` component that take the result of any `useAdminConfig()` (so `field`, `reset` and `namespace` as props).
 
 Spoiler alert, having this kind of component type safe can be tricky, indeed you can try use `ReturnType<typeof useFirstAdminConfig> | ReturnType<typeof useSecondAdminConfig>` as props but typescript will fight you (`Array.map` will tell you that the signature are not compatible).
 
@@ -248,4 +248,4 @@ PS: If you have a better idea/pattern, please open an issue to tell me about it 
 
 We also expose from `createConfig` a simple `getConfig`, `getAllConfig` and `setConfig`. These functions can be used standalone and do not require use of the `useConfig` react hooks. This can be useful for accessing or mutating configuration values in component lifecycle hooks, or anywhere else outside of render.
 
-These functions and are exactly the same as their counterparts available inside the `useConfig` react hook, the only thing you lose is the hot config reload.
+These functions are exactly the same as their counterparts available inside the `useConfig` react hook, the only thing you lose is the hot config reload.

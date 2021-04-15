@@ -147,7 +147,7 @@ export type AdminField<TSchema extends Record<string, Config>, TKey extends keyo
    */
   storageValue: ResolvedConfigValue<TSchema[TKey]> | null;
   /**
-   * True if a value is store on the localStorage
+   * True if a value is stored on the localStorage
    */
   isFromStorage: boolean;
   /**
