@@ -32,7 +32,7 @@ export interface ConfigOptions<TSchema extends Record<string, Config>, TNamespac
    * ```
    *  // MyConfig.ts
    *  export const { useConfig } = createConfig({
-   *    useConfigNamespace: "hello"
+   *    configNamespace: "hello"
    *   });
    *
    * // In a react component
