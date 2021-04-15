@@ -91,7 +91,10 @@ export function createConfig<TSchema extends Record<string, Config>, TNamespace 
    * @throws
    */
   function getConfig<K extends keyof ResolvedSchema<TSchema>>(path: K): ResolvedSchema<TSchema>[K] {
-    const defaultValue = options.schema[path].default as ResolvedSchema<TSchema>[K];
+    const defaultValue =
+      typeof options.schema[path].default === "function"
+        ? (options.schema[path].default as () => ResolvedSchema<TSchema>[K])()
+        : (options.schema[path].default as ResolvedSchema<TSchema>[K]);
     const storageValue = getStorageValue(path);
     const windowValue = getWindowValue(path);
 

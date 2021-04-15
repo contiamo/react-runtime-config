@@ -128,6 +128,24 @@ describe("react-runtime-config", () => {
       expect(getConfig("port")).toBe(8000);
     });
 
+    it("should return the default value (function)", () => {
+      let port = 8000;
+      const getPort = () => port;
+      const { getConfig } = createConfig({
+        namespace,
+        storage,
+        schema: {
+          port: {
+            type: "number",
+            default: getPort,
+          },
+        },
+      });
+      expect(getConfig("port")).toBe(8000);
+      port = 9000;
+      expect(getConfig("port")).toBe(9000);
+    });
+
     it("should return the window default", () => {
       const { getConfig } = createConfigWithDefaults();
       expect(getConfig("color")).toBe("blue");

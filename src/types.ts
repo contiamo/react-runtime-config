@@ -51,7 +51,7 @@ export type Config = StringConfig | NumberConfig | BooleanConfig | CustomConfig;
 export interface StringConfig {
   type: "string";
   enum?: string[];
-  default?: string;
+  default?: string | (() => string);
   description?: string;
 }
 
@@ -66,19 +66,19 @@ export interface NumberConfig {
   type: "number";
   min?: number;
   max?: number;
-  default?: number;
+  default?: number | (() => number);
   description?: string;
 }
 
 export interface BooleanConfig {
   type: "boolean";
-  default?: boolean;
+  default?: boolean | (() => boolean);
   description?: string;
 }
 
 export interface CustomConfig<T = unknown> {
   type: "custom";
-  default?: T;
+  default?: T | (() => T);
   description?: string;
   /**
    * Custom parser.
