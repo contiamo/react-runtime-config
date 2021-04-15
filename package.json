@@ -1,24 +1,25 @@
 {
   "name": "react-runtime-config",
   "version": "2.2.0",
-  "description": "Provide a runtime configuration inside a react app",
+  "description": "Provide a typesafe runtime configuration inside a react app",
   "repository": {
     "type": "git",
     "url": "git@github.com:contiamo/react-runtime-config.git"
   },
-  "main": "dist/index.js",
-  "typings": "dist/index.d.ts",
-  "module": "dist/react-runtime-config.esm.js",
+  "main": "lib/index.js",
+  "typings": "lib/index.d.ts",
   "files": [
-    "dist"
+    "lib"
   ],
   "scripts": {
-    "start": "tsdx test --watch",
-    "test": "tsdx test",
-    "build": "tsdx build",
-    "prepublishOnly": "tsdx build"
+    "start": "jest --watch",
+    "test": "jest",
+    "build": "tsc -p tsconfig.package.json",
+    "prepublishOnly": "yarn test --ci && yarn build",
+    "format": "eslint src/*.{ts,tsx} --fix && prettier src/*.{ts,tsx,json} --write"
   },
   "keywords": [
+    "typescript",
     "react",
     "config",
     "configuration",
@@ -27,28 +28,37 @@
   "author": "Fabien Bernard <fabien@contiamo.com>",
   "license": "MIT",
   "devDependencies": {
-    "@types/jest": "^25.2.1",
-    "@types/lodash": "^4.14.116",
-    "@types/react": "^16.4.12",
-    "husky": "^4.2.5",
-    "prettier": "^2.0.5",
-    "pretty-quick": "^2.0.1",
-    "react-dom": "^16.4.2",
-    "react-testing-library": "^5.0.0",
-    "ts-mockery": "^1.0.0",
-    "tsdx": "^0.13.2",
-    "typescript": "^3.8.3"
+    "@testing-library/react-hooks": "^5.1.1",
+    "@types/jest": "^26.0.22",
+    "@types/lodash": "^4.14.168",
+    "@types/react": "^16.14.4",
+    "@typescript-eslint/eslint-plugin": "^4.22.0",
+    "@typescript-eslint/parser": "^4.22.0",
+    "eslint": "^7.24.0",
+    "eslint-config-prettier": "^8.1.0",
+    "eslint-plugin-prettier": "^3.3.1",
+    "husky": "^6.0.0",
+    "jest": "^26.6.3",
+    "prettier": "^2.2.1",
+    "pretty-quick": "^3.1.0",
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2",
+    "react-test-renderer": "^17.0.2",
+    "ts-jest": "^26.5.3",
+    "ts-mockery": "^1.2.0",
+    "typescript": "^4.2.4"
   },
   "dependencies": {
-    "lodash": "^4.17.11",
-    "react": "^16.13.1"
+    "lodash": "^4.17.21"
   },
   "peerDependencies": {
     "react": ">=16"
   },
-  "husky": {
-    "hooks": {
-      "pre-commit": "pretty-quick --staged"
-    }
+  "jest": {
+    "preset": "ts-jest",
+    "testEnvironment": "jsdom",
+    "testMatch": [
+      "**/*.test.ts"
+    ]
   }
 }
