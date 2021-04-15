@@ -185,9 +185,9 @@ export default () => {
       <Card title="Configuration">
         {fields.map(field =>
           field.type === "boolean" ? (
-            <Checkbox key={field.path} value={field.value} label={field.path} onChange={field.set} />
+            <Checkbox key={field.key} value={field.value} label={field.key} onChange={field.set} />
           ) : (
-            <Input key={field.path} value={field.value} label={field.path} onChange={field.set} />
+            <Input key={field.key} value={field.value} label={field.key} onChange={field.set} />
           ),
         )}
         <Button onClick={reset}>Reset config</Button>
@@ -221,13 +221,13 @@ export const ConfigSection = ({ namespace, fields }: ConfigSectionProps) => {
     <Section title={namespace}>
       {fields.map(f => {
         if (f.type === "string" && !f.enum) {
-          return <Input key={f.path} type="text" label={f.path} onChange={f.set} value={f.value} />;
+          return <Input key={f.key} type="text" label={f.key} onChange={f.set} value={f.value} />;
         }
         if (f.type === "number") {
-          return <Input key={f.path} type="number" label={f.path} onChange={f.set} value={f.value} />;
+          return <Input key={f.key} type="number" label={f.key} onChange={f.set} value={f.value} />;
         }
         if (f.type === "boolean") {
-          return <Checkbox key={f.path} label={f.path} onChange={f.set} value={f.value} />;
+          return <Checkbox key={f.key} label={f.key} onChange={f.set} value={f.value} />;
         }
         if (f.type === "string" && f.enum) {
           // `f.set` can take `any` but you still have runtime validation if a wrong value is provided.
