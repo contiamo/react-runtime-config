@@ -2,7 +2,7 @@ export interface ConfigOptions<TSchema extends Record<string, Config>, TNamespac
   /**
    * Namespace of the configuration
    *
-   * This namespace is used to consume the configuration from `window` and `localstorage`
+   * This namespace is used to consume the configuration from `window` and `localStorage`
    */
   namespace: string;
 
@@ -19,7 +19,7 @@ export interface ConfigOptions<TSchema extends Record<string, Config>, TNamespac
   storage?: Storage;
 
   /**
-   * Permit to overidde any config values in storage
+   * Permit to override any config values in storage
    *
    * @default true
    */
@@ -43,7 +43,7 @@ export interface ConfigOptions<TSchema extends Record<string, Config>, TNamespac
    * } = useConfig();
    * ```
    */
-  useConfigNamespace?: TNamespace;
+  configNamespace?: TNamespace;
 }
 
 export type Config = StringConfig | NumberConfig | BooleanConfig | CustomConfig;
@@ -117,7 +117,7 @@ export interface InjectedProps<
   TConfig = ResolvedSchema<TSchema>
 > {
   namespace: string;
-  useConfigNamespace: TNamespace;
+  configNamespace: TNamespace;
   schema: TSchema;
   storage: Storage;
   localOverride: boolean;
@@ -147,7 +147,7 @@ export type AdminField<TSchema extends Record<string, Config>, TKey extends keyo
    */
   storageValue: ResolvedConfigValue<TSchema[TKey]> | null;
   /**
-   * True if a value is store on the localstorage
+   * True if a value is store on the localStorage
    */
   isFromStorage: boolean;
   /**
@@ -185,12 +185,12 @@ type AdminProps<T, U = T> = {
 /**
  * `useAdminConfig.fields` in a generic version.
  *
- * This should be used if you are implement a generic component
+ * This should be used if you are implementing a generic component
  * that consume any `fields` as prop.
  *
  * Note: "custom" type and "string" with enum are defined as `any` to be
  * compatible with any schemas. You will need to validate them in your
- * implementation to retrieve type safety.
+ * implementation to retrieve a strict type.
  */
 export type GenericAdminFields = Array<
   | (StringConfig & AdminProps<string>)
@@ -207,6 +207,15 @@ type UseConfigReturnType<TSchema extends Record<string, Config>> = {
   setConfig: <K extends keyof TSchema>(path: K, value: ResolvedConfigValue<TSchema[K]>) => void;
 };
 
+/**
+ * Helper to inject a namespace inside the keys of the `useConfig` return type.
+ *
+ * example:
+ * ```
+ * type Namespaced<{getConfig: any; getAllConfig: any; setConfig: any}, "foo">
+ * // { getFooConfig: any; getAllFooConfig: any; setFooConfig: any }
+ * ```
+ */
 type Namespaced<T, TNamespace extends string> = {
   [P in keyof T as P extends `getConfig`
     ? `get${Capitalize<TNamespace>}Config`

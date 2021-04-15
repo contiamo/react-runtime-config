@@ -1,14 +1,14 @@
 import { InjectedProps, Config, ResolvedConfigValue, AdminFields } from "./types";
 import { useCallback, useMemo } from "react";
-import { useWatchLocalstorageEvents } from "./utils";
+import { useWatchLocalStorageEvents } from "./utils";
 
-export function createUseAdminConfig<T extends Record<string, Config>, TNamespace extends string>(
-  props: InjectedProps<T, TNamespace>,
+export function createUseAdminConfig<TSchema extends Record<string, Config>, TNamespace extends string>(
+  props: InjectedProps<TSchema, TNamespace>,
 ) {
   return () => {
-    const localstorageDep = useWatchLocalstorageEvents(props.storage, props.localOverride);
+    const localStorageDependency = useWatchLocalStorageEvents(props.storage, props.localOverride);
 
-    const configKeys: (keyof T)[] = useMemo(() => Object.keys(props.schema), [props.schema]);
+    const configKeys: (keyof TSchema)[] = useMemo(() => Object.keys(props.schema), [props.schema]);
 
     const fields = useMemo(() => {
       return configKeys.map(key => ({
@@ -19,9 +19,9 @@ export function createUseAdminConfig<T extends Record<string, Config>, TNamespac
         storageValue: props.getStorageValue(key),
         isFromStorage: props.getStorageValue(key) !== null,
         value: props.getConfig(key),
-        set: (value: ResolvedConfigValue<T[typeof key]>) => props.setConfig(key, value),
-      })) as AdminFields<T>;
-    }, [localstorageDep, configKeys]);
+        set: (value: ResolvedConfigValue<TSchema[typeof key]>) => props.setConfig(key, value),
+      })) as AdminFields<TSchema>;
+    }, [localStorageDependency, configKeys]);
 
     const reset = useCallback(() => {
       configKeys.forEach(path => {

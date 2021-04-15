@@ -1,12 +1,12 @@
 import React from "react";
 
 /**
- * Utils to provide a key that depends to the localstorage state.
+ * Utils to provide a key that depends to the localStorage state.
  *
  * @param storage
  * @param localOverride
  */
-export const useWatchLocalstorageEvents = (storage: Storage, localOverride: boolean) => {
+export const useWatchLocalStorageEvents = (storage: Storage, localOverride: boolean) => {
   const [key, setKey] = React.useState(0);
 
   React.useEffect(() => {

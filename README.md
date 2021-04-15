@@ -92,10 +92,10 @@ export const { useConfig, useAdminConfig } = createConfig({
       description: "Link of the monitoring",
       parser: value => {
         if (typeof value === "object" && typeof value.url === "string" && typeof value.displayName === "string") {
-          // The type will be infered from the return type
+          // The type will be inferred from the return type
           return { url: value.url as string, displayName: value.displayName as string };
         }
-        // This error will be shown if the `window.MY_APP_CONFIG.monitoringLink` can't be parsed or if we `setConfig` an unvalid value
+        // This error will be shown if the `window.MY_APP_CONFIG.monitoringLink` can't be parsed or if we `setConfig` an invalid value
         throw new Error("Monitoring link invalid!");
       },
     },
@@ -135,21 +135,21 @@ The priority of config values is as follows:
 
 In a large application, you may have multiple instance of `useConfig` from different `createConfig`. So far every `useConfig` will return a set of `getConfig`, `setConfig` and `getAllConfig`.
 
-To avoid any confusion or having to manually rename every usage of `useConfig` in a large application, you can use the `useConfigNamespace` options.
+To avoid any confusion or having to manually rename every usage of `useConfig` in a large application, you can use the `configNamespace` options.
 
 ```ts
 // themeConfig.ts
 export const { useConfig: useThemeConfig } = createConfig({
   namespace: "theme",
   schema: {},
-  useConfigNamespace: "theme", // <- here
+  configNamespace: "theme", // <- here
 });
 
 // apiConfig.ts
 export const { useConfig: useApiConfig } = createConfig({
   namespace: "api",
   schema: {},
-  useConfigNamespace: "api", // <- here
+  configNamespace: "api", // <- here
 });
 
 // App.ts

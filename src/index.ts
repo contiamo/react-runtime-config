@@ -24,22 +24,22 @@ import { createUseAdminConfig } from "./createUseAdminConfig";
 import { createUseConfig } from "./createUseConfig";
 
 export {
-  // Options
+  // -- Options --
   ConfigOptions,
-  // Configs
+  // -- Configs --
   Config,
   StringConfig,
   StringEnumConfig,
   NumberConfig,
   BooleanConfig,
   CustomConfig,
-  // Typeguards
+  // -- Typeguards --
   isStringEnumConfig,
   isNumberConfig,
   isCustomConfig,
   isBooleanConfig,
   isStringConfig,
-  // useConfigAdmin.fields
+  // -- useConfigAdmin.fields --
   AdminField,
   AdminFields,
   GenericAdminFields,
@@ -51,12 +51,12 @@ export function createConfig<TSchema extends Record<string, Config>, TNamespace 
   const injected: Pick<InjectedProps<TSchema, TNamespace>, keyof ConfigOptions<TSchema, TNamespace>> = {
     storage: window.localStorage,
     localOverride: true,
-    useConfigNamespace: "" as TNamespace,
+    configNamespace: "" as TNamespace,
     ...options,
   };
 
   /**
-   * Get a config value from the storage (localstorage by default)
+   * Get a config value from the storage (localStorage by default)
    */
   const getStorageValue = (path: keyof TSchema) => {
     if (injected.storage && injected.localOverride) {

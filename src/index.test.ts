@@ -158,19 +158,19 @@ describe("react-runtime-config", () => {
       expect(monitoringLink.displayName).toBe("Monitoring");
     });
 
-    it("should return the localstorage value (storage set before)", () => {
+    it("should return the localStorage value (storage set before)", () => {
       storage.setItem(`${namespace}.color`, "pink");
       const { getConfig } = createConfigWithDefaults();
       expect(getConfig("color")).toBe("pink");
     });
 
-    it("should return the localstorage value (storage set after)", () => {
+    it("should return the localStorage value (storage set after)", () => {
       const { getConfig } = createConfigWithDefaults();
       storage.setItem(`${namespace}.color`, "pink");
       expect(getConfig("color")).toBe("pink");
     });
 
-    it("should return the localstorage value (with setConfig)", () => {
+    it("should return the localStorage value (with setConfig)", () => {
       const { getConfig, setConfig } = createConfigWithDefaults();
       setConfig("color", "green");
       expect(getConfig("color")).toBe("green");
@@ -254,7 +254,7 @@ describe("react-runtime-config", () => {
       expect(getConfig("isAwesome")).toBe(false);
     });
 
-    it("should remove the localstorage value if same as the window one", () => {
+    it("should remove the localStorage value if same as the window one", () => {
       const { setConfig } = createConfigWithDefaults();
       // Add a custom value
       setConfig("isAwesome", false);
@@ -265,7 +265,7 @@ describe("react-runtime-config", () => {
       expect(storage.getItem("test.isAwesome")).toBe(null);
     });
 
-    it("should remove the localstorage value if same as the default one", () => {
+    it("should remove the localStorage value if same as the default one", () => {
       const { setConfig } = createConfigWithDefaults();
       // Add a custom value
       setConfig("isLive", true);
@@ -354,7 +354,7 @@ describe("react-runtime-config", () => {
         schema: {
           oh: { type: "string", default: "yeah" },
         },
-        useConfigNamespace: "boom",
+        configNamespace: "boom",
       });
       const { result } = renderHook(useConfig);
       const { getAllBoomConfig, getBoomConfig, setBoomConfig } = result.current;
