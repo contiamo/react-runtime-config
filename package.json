@@ -1,6 +1,6 @@
 {
   "name": "react-runtime-config",
-  "version": "3.0.1",
+  "version": "3.0.2",
   "description": "Provide a typesafe runtime configuration inside a react app",
   "repository": {
     "type": "git",
