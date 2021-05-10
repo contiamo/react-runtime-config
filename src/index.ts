@@ -61,7 +61,10 @@ export function createConfig<TSchema extends Record<string, Config>, TNamespace 
   const getStorageValue = (path: keyof TSchema) => {
     if (injected.storage && injected.localOverride) {
       try {
-        const rawValue = injected.storage.getItem(`${injected.namespace}.${path}`);
+        let rawValue = injected.storage.getItem(`${injected.namespace}.${path}`);
+        try {
+          rawValue = JSON.parse(rawValue || ""); // Handle objects stored as string
+        } catch {}
         return parse(rawValue, options.schema[path]);
       } catch {
         return null;
@@ -135,7 +138,8 @@ export function createConfig<TSchema extends Record<string, Config>, TNamespace 
     if (getWindowValue(path) === value || config.default === value) {
       injected.storage.removeItem(`${injected.namespace}.${path}`);
     } else {
-      injected.storage.setItem(`${injected.namespace}.${path}`, String(value));
+      const encodedValue = typeof value === "string" ? value : JSON.stringify(value);
+      injected.storage.setItem(`${injected.namespace}.${path}`, encodedValue);
     }
     window.dispatchEvent(new Event("storage"));
   }

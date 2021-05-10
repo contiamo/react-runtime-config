@@ -158,6 +158,15 @@ describe("react-runtime-config", () => {
       expect(monitoringLink.displayName).toBe("Monitoring");
     });
 
+    it("should return a custom parsed value from localStorage", () => {
+      const { getConfig, setConfig } = createConfigWithDefaults();
+      act(() => setConfig("monitoringLink", { url: "http://localhost:6000", displayName: "from local" }));
+
+      const monitoringLink = getConfig("monitoringLink");
+      expect(monitoringLink.url).toBe("http://localhost:6000");
+      expect(monitoringLink.displayName).toBe("from local");
+    });
+
     it("should return the localStorage value (storage set before)", () => {
       storage.setItem(`${namespace}.color`, "pink");
       const { getConfig } = createConfigWithDefaults();
@@ -174,6 +183,12 @@ describe("react-runtime-config", () => {
       const { getConfig, setConfig } = createConfigWithDefaults();
       setConfig("color", "green");
       expect(getConfig("color")).toBe("green");
+    });
+
+    it("should return the localStorage value (with setConfig and number)", () => {
+      const { getConfig, setConfig } = createConfigWithDefaults();
+      setConfig("port", 666);
+      expect(getConfig("port")).toBe(666);
     });
 
     it("should ignore the storage value (localOverride=false)", () => {
